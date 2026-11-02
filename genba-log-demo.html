@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>げんばログ</title>
+<script src="webxdc.js"></script>
+<style>
+:root{--bg:#E9ECEF;--card:#fff;--ink:#16202A;--mute:#5C6773;--line:#D3D9DF;--y:#FFC21A;--board:#1F4D3A;--wood:#D9BE8A;--chalk:#F4F6EF;--red:#C93A26;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#10161C;--card:#1A232D;--ink:#EEF2F5;--mute:#9AA6B2;--line:#2B3744;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #2F7DD1;outline-offset:2px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+.logo{width:42px;height:42px;border-radius:13px;background:var(--y);display:grid;place-items:center}
+h1{margin:0;font-size:22px;font-weight:800;line-height:1.1;letter-spacing:.03em}
+.sub{font-size:13px;color:var(--mute)}
+.cnt{margin-left:4px;text-align:right;font-size:13px;color:var(--mute);line-height:1.2}
+.cnt b{display:block;font-size:24px;color:var(--ink)}
+main{max-width:560px;margin:0 auto;padding:14px 14px 130px}
+.edit{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#FFE9A6;color:#16202A;border-radius:14px;padding:8px 8px 8px 14px;margin-bottom:12px;font-weight:700}
+.edit button{min-height:44px;padding:0 14px;border-radius:12px;border:2px solid #16202A;background:transparent;font-weight:800}
+.board{background:var(--board);color:var(--chalk);border:8px solid var(--wood);border-radius:22px;padding:16px;display:grid;gap:16px;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.row{display:grid;grid-template-columns:1fr;gap:6px}
+.row>b{font-size:15px;opacity:.9}
+.chalk{border:2px solid rgba(244,246,239,.55);background:transparent;color:var(--chalk);border-radius:14px}
+#date{width:100%;height:56px;padding:0 12px;font-size:20px;font-weight:700;color-scheme:dark}
+.wx{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.wx button{height:68px;font-size:27px;line-height:1;display:grid;place-items:center;padding:6px 0 4px}
+.wx small{font-size:12px;font-weight:700}
+.wx button[aria-pressed=true]{background:var(--y);border-color:var(--y);color:#16202A}
+.step{display:grid;grid-template-columns:64px 1fr 64px;gap:8px;align-items:center}
+.step button{height:56px;font-size:30px;font-weight:700;cursor:pointer}
+.n{display:flex;align-items:baseline;justify-content:center;gap:4px;font-weight:800}
+.n input{width:5ch;text-align:center;font-size:34px;font-weight:800;background:transparent;border:0;color:var(--chalk);padding:0;-moz-appearance:textfield}
+.n input::-webkit-inner-spin-button{-webkit-appearance:none}
+.lab{display:flex;justify-content:space-between;align-items:baseline;margin:22px 2px 8px;font-weight:800}
+.lab span{font-weight:500;font-size:13px;color:var(--mute)}
+textarea{width:100%;min-height:132px;border:2px solid var(--line);border-radius:16px;background:var(--card);padding:14px;font-size:18px;line-height:1.6;resize:vertical}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.slot{aspect-ratio:1;border-radius:14px;border:2px dashed var(--line);background:var(--card);position:relative;overflow:hidden}
+.slot img{width:100%;height:100%;object-fit:cover;display:block}
+.slot .x{position:absolute;top:5px;right:5px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(22,32,42,.82);color:#fff;font-size:22px;cursor:pointer}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.btn{min-height:56px;border-radius:16px;border:2px solid var(--ink);background:var(--card);font-weight:800;padding:0 16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.main{background:var(--y);border-color:var(--y);color:#16202A;font-size:20px;min-height:66px;width:100%;margin-top:24px}
+.btn:disabled{opacity:.4}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:10;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
+nav button{height:60px;border:0;border-radius:16px;background:transparent;font-weight:800;font-size:14px;color:var(--mute);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+nav button[aria-selected=true]{background:var(--ink);color:var(--bg)}
+nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.card{background:var(--card);border-radius:18px;border:1px solid var(--line);border-left:7px solid var(--y);padding:14px;margin-bottom:12px}
+.top{display:flex;align-items:center;gap:10px}
+.dt{font-size:28px;font-weight:800;line-height:1}
+.dt small{font-size:14px;font-weight:700;color:var(--mute);margin-left:4px}
+.chips{margin-left:auto;display:flex;gap:8px;align-items:center}
+.chip{background:var(--bg);border-radius:999px;padding:3px 12px;font-weight:800}
+.wxe{font-size:28px;line-height:1}
+.body{margin:10px 0;white-space:pre-wrap;word-break:break-word}
+.ph{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.ph>*{aspect-ratio:1;width:100%;border-radius:12px;overflow:hidden;border:0;padding:0;background:var(--bg);display:grid;place-items:center;font-size:13px;color:var(--mute)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.meta{display:flex;align-items:center;gap:8px;color:var(--mute);font-size:14px;flex-wrap:wrap}
+.tag{background:#FFE9A6;color:#16202A;border-radius:8px;padding:0 8px;font-weight:700;font-size:12px}
+.acts{margin-left:auto;display:flex;gap:8px}
+.mini{min-height:48px;padding:0 16px;border-radius:14px;border:2px solid var(--line);background:transparent;font-weight:800;cursor:pointer}
+.mini.arm{background:var(--red);border-color:var(--red);color:#fff}
+.empty{text-align:center;padding:48px 16px;color:var(--mute)}
+.empty b{display:block;font-size:20px;color:var(--ink);margin-bottom:6px}
+#v{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.93);display:grid;place-items:center}
+#v img{max-width:100%;max-height:100%}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:700;z-index:60;max-width:90%;text-align:center}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;display:grid;gap:10px}
+.sec h2{margin:0;font-size:19px}
+.hint{margin:0;font-size:14px;color:var(--mute)}
+.per{display:flex;gap:10px;align-items:center}
+#mon{flex:1;min-width:0;height:56px;border:2px solid var(--line);border-radius:14px;background:var(--bg);padding:0 12px;font-size:19px;font-weight:700}
+.all{display:flex;align-items:center;gap:8px;font-weight:700;min-height:56px;white-space:nowrap}
+.all input{width:28px;height:28px;accent-color:#16202A}
+.sum{font-weight:800;font-size:18px}
+.btn.y{background:var(--y);border-color:var(--y);color:#16202A}
+#impbox{background:#FFE9A6;color:#16202A;border-radius:14px;padding:14px;display:grid;gap:10px}
+#impbox p{margin:0;font-weight:700}
+#impbox .btn{border-color:#16202A;color:#16202A;background:#fff}
+#impbox .btn.y{background:var(--y)}
+.chalk[aria-pressed=true]{background:var(--y);border-color:var(--y);color:#16202A}
+.chalk{cursor:pointer}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts .chalk{min-height:52px;padding:0 14px;font-weight:700;font-size:16px}
+.tg{min-height:56px;width:100%;font-weight:800;font-size:18px}
+.tx{width:100%;height:56px;padding:0 12px;font-size:19px;font-weight:700}
+.xs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.xs .chip{font-size:14px}
+.fl{display:grid;gap:4px;font-weight:700}
+.fl input,.ef input,.ef select{height:52px;border:2px solid var(--line);border-radius:12px;background:var(--bg);padding:0 12px;font-size:17px;min-width:0;width:100%}
+.ef{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;border:1px solid var(--line);border-radius:14px}
+.ef input[data-p=o]{grid-column:1/-1}
+.chip.ng{background:var(--red);color:#fff}
+.btn[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff}
+.lst{display:grid;gap:8px}
+.lst .tg{justify-content:flex-start;text-align:left;padding:0 14px}
+.tm{display:grid;grid-template-columns:1fr 76px;gap:8px}
+.tm button{height:56px;font-weight:800;font-size:17px}
+.tx{color-scheme:dark}
+#gf{height:52px;border:2px solid var(--line);border-radius:12px;background:var(--bg);padding:0 12px;font-size:17px;width:100%}
+#gr svg{width:100%;height:auto;display:block}
+#lang{margin-left:auto;max-width:112px;height:40px;border:2px solid var(--line);border-radius:12px;background:var(--card);padding:0 6px;font-size:13px;font-weight:700}
+[dir=rtl] #lang{margin-left:0;margin-right:auto}
+[dir=rtl] .cnt{margin-left:0;margin-right:4px;text-align:left}
+[dir=rtl] .card{border-left:1px solid var(--line);border-right:7px solid var(--y)}
+[dir=rtl] .slot .x{right:auto;left:5px}
+[dir=rtl] .chips,[dir=rtl] .acts{margin-left:0;margin-right:auto}
+[dir=rtl] .lst .tg{text-align:right}
+[dir=rtl] .dt small{margin-left:0;margin-right:4px}
+/* Allow translated labels and native date/month controls to fit narrow screens. */
+.board{grid-template-columns:minmax(0,1fr)}
+.row,.sec>*,.board>*{min-width:0}
+.row>b,.sub,.btn,.tg{overflow-wrap:anywhere}
+.wx{grid-template-columns:repeat(4,minmax(0,1fr))}
+.wx small{overflow-wrap:anywhere;text-align:center}
+.step{grid-template-columns:48px minmax(0,1fr) 48px}
+.n{min-width:0;gap:2px}.n input{min-width:0;width:4ch;max-width:100%;font-size:30px}
+.n span{font-size:14px}
+.pick{grid-template-columns:repeat(2,minmax(0,1fr))}
+.btn{min-width:0;padding:8px 12px;text-align:center}
+.per{flex-wrap:wrap}.per #mon{flex:1 1 140px}.per .all{white-space:normal}
+nav button{min-width:0;overflow-wrap:anywhere;font-size:clamp(11px,3.3vw,14px)}
+@media(max-width:380px){
+ header{display:grid;grid-template-columns:36px minmax(0,1fr) 94px;column-gap:8px;row-gap:0;padding-left:12px;padding-right:12px}
+ header .logo{width:36px;height:36px;grid-row:1/3}
+ header>div:nth-child(2){grid-column:2;grid-row:1;min-width:0}
+ header h1{font-size:20px}header .sub{font-size:11px}
+ #lang{grid-column:3;grid-row:1/3;width:94px;max-width:94px;margin:0!important}
+ header .cnt{grid-column:2;grid-row:2;display:flex;gap:6px;align-items:baseline;text-align:start;margin:0;font-size:11px}
+ header .cnt b{font-size:15px}
+}
+.fl select{height:52px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);padding:0 12px;font:inherit;min-width:0;width:100%}
+.word-preview{background:var(--bg);padding:12px;border-radius:12px;overflow-wrap:anywhere}
+.word-preview p{margin:4px 0 0}.word-fields{display:grid;gap:12px;margin-top:12px}
+#word-custom summary{cursor:pointer;font-weight:700;min-height:44px;padding:8px 0;overflow-wrap:anywhere}
+.acts{flex-wrap:wrap;max-width:100%}.mini{min-width:0;max-width:100%;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="2" y="3" width="22" height="18" rx="4" fill="#1F4D3A" stroke="#16202A" stroke-width="2"/><path d="M7 9.5l2 2 3-3.5M15 10h4M7 16h12" stroke="#F4F6EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div><h1>げんばログ</h1><div class="sub" id="sub"></div></div>
+  <select id="lang" aria-label="言語"></select>
+  <div class="cnt"><span data-i="記録">記録</span><b id="cnt">0</b></div>
+</header>
+<main>
+  <section id="vw">
+    <div class="edit" id="eb" hidden><span data-i="訂正中：上書き保存します">訂正中：上書き保存します</span><button id="cancel" data-i="やめる">やめる</button></div>
+    <div class="board" id="board"></div>
+    <div class="lab"><b id="tl">作業内容</b><span id="tc">0/500</span></div>
+    <textarea id="tx" maxlength="500"></textarea>
+    <div class="lab"><b data-i="写真">写真</b><span id="pc">0/3</span></div>
+    <div class="slots" id="slots"></div>
+    <div class="pick">
+      <label class="btn">📷 <span data-i="撮影">撮影</span><input id="cam" type="file" accept="image/*" capture="environment" hidden></label>
+      <label class="btn">🖼 <span data-i="選ぶ">選ぶ</span><input id="fil" type="file" accept="image/*" multiple hidden></label>
+    </div>
+    <button class="btn main" id="post" data-i="投稿する">投稿する</button>
+  </section>
+  <section id="vl" hidden>
+    <div id="flt" hidden style="margin-bottom:12px"><button class="btn" id="fng" aria-pressed="false" style="width:100%"></button></div>
+    <div id="list"></div>
+    <div class="empty" id="empty"><b data-i="まだ日誌がありません">まだ日誌がありません</b><br><button class="btn" id="first" data-i="日誌を書く" style="margin:0 auto">日誌を書く</button></div>
+  </section>
+  <section id="vd" hidden>
+    <div class="sec"><h2 data-i="書き出し">書き出し</h2>
+      <p class="hint" data-i="期間を選んで、チャットにファイルを送ります。">期間を選んで、チャットにファイルを送ります。</p>
+      <div class="per"><input id="mon" type="month" aria-label="月"><label class="all"><input id="all" type="checkbox"><span data-i="全期間">全期間</span></label></div>
+      <div class="sum" id="sum"></div>
+      <button class="btn ex" id="xc" data-i="表（CSV）を送る">📄 表（CSV）を送る</button>
+      <button class="btn ex" id="xh" data-i="写真つきまとめ（HTML）を送る">🧾 写真つきまとめ（HTML）を送る</button>
+      <button class="btn ex" id="xj" data-i="引き継ぎデータ（JSON）を送る">📦 引き継ぎデータ（JSON）を送る</button>
+    </div>
+    <div class="sec" id="gsec"><h2 data-i="推移グラフ">推移グラフ</h2>
+      <p class="hint" data-i="上で選んだ期間の、数値の変化を表示します。">上で選んだ期間の、数値の変化を表示します。</p>
+      <select id="gf" aria-label="グラフにする項目"></select>
+      <div id="gr"></div><div class="hint" id="gs"></div>
+    </div>
+    <div class="sec"><h2 data-i="取り込み">取り込み</h2>
+      <p class="hint" data-i="別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。">別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。</p>
+      <button class="btn" id="impbtn" data-i="ファイルを選ぶ">📥 ファイルを選ぶ</button>
+      <input id="impfile" type="file" accept=".json,application/json" hidden>
+      <div id="impbox" hidden><p id="impinfo"></p><label class="all" id="impl" hidden><input id="imptpl" type="checkbox" checked><span></span></label><div class="pick"><button class="btn y" id="impgo" data-i="取り込む">取り込む</button><button class="btn" id="impno" data-i="やめる">やめる</button></div></div>
+    </div>
+  </section>
+  <section id="vs" hidden>
+    <div class="sec" id="wording-settings">
+      <h2 data-i="表現の設定">表現の設定</h2>
+      <p class="hint" data-i="この端末の表示だけを変えます。記録やほかの人の設定は変わりません。"></p>
+      <label class="fl"><span data-i="年代・読みやすさ"></span><select id="word-age"></select></label>
+      <label class="fl"><span data-i="仕事・用途"></span><select id="word-role"></select></label>
+      <div class="word-preview"><b data-i="表示例"></b><p id="word-preview" aria-live="polite"></p></div>
+      <details id="word-custom"><summary data-i="表現を自分で調整"></summary>
+        <p class="hint" data-i="空欄なら選んだ表現を使います。"></p>
+        <div class="word-fields">
+          <label class="fl"><span data-i="記録を残すボタン"></span><input id="word-post" maxlength="32" dir="auto"></label>
+          <label class="fl"><span data-i="編集ボタン"></span><input id="word-edit" maxlength="32" dir="auto"></label>
+          <label class="fl"><span data-i="削除ボタン"></span><input id="word-delete" maxlength="32" dir="auto"></label>
+          <label class="fl"><span data-i="本文の見出し"></span><input id="word-heading" maxlength="32" dir="auto"></label>
+        </div>
+      </details>
+      <button class="btn" id="word-reset" data-i="表現を初期設定に戻す"></button>
+    </div>
+    <div class="sec"><h2 data-i="日誌の形式">日誌の形式</h2>
+      <p class="hint" data-i="この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。">この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。</p>
+      <div class="sum" id="cur"></div>
+      <div class="opts" id="presets"></div>
+    </div>
+    <div class="sec"><h2 data-i="項目を編集">項目を編集</h2>
+      <label class="fl"><span data-i="形式の名前">形式の名前</span><input id="e-name" maxlength="16"></label>
+      <label class="all"><input id="e-wx" type="checkbox"><span data-i="天気を入力する">天気を入力する</span></label>
+      <label class="fl"><span data-i="本文の見出し">本文の見出し</span><input id="e-tl" maxlength="16"></label>
+      <div id="e-fields" style="display:grid;gap:10px"></div>
+      <button class="btn" id="e-add" data-i="＋ 項目を追加（最大6）">＋ 項目を追加（最大6）</button>
+      <button class="btn y" id="e-save" style="min-height:62px;font-size:18px" data-i="全員に反映する">全員に反映する</button>
+    </div>
+  </section>
+</main>
+<nav>
+  <button id="t1" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span data-i="書く">書く</span></button>
+  <button id="t2" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></svg><span data-i="一覧">一覧</span></button>
+  <button id="t3" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span data-i="データ">データ</span></button>
+  <button id="t4" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 4v6M9 14v6"/></svg><span data-i="設定">設定</span></button>
+</nav>
+<div id="v" hidden><img alt="拡大写真"></div>
+<div class="toast" id="toast" hidden></div>
+<script>
+const EXTRA={"ja":{"飼育日誌":"飼育日誌","様子・メモ":"様子・メモ","対象":"対象","給餌":"給餌","投薬":"投薬","体重":"体重","水温・室温":"水温・室温","点検巡回":"点検巡回","所見・指摘事項":"所見・指摘事項","点検項目":"点検項目","外観":"外観","異音":"異音","漏れ":"漏れ","温度":"温度","清掃状況":"清掃状況","観察記録":"観察記録","観察メモ":"観察メモ","気温":"気温","個体数":"個体数","匹":"匹","書き出し":"書き出し","期間を選んで、チャットにファイルを送ります。":"期間を選んで、チャットにファイルを送ります。","全期間":"全期間","表（CSV）を送る":"表（CSV）を送る","写真つきまとめ（HTML）を送る":"写真つきまとめ（HTML）を送る","引き継ぎデータ（JSON）を送る":"引き継ぎデータ（JSON）を送る","推移グラフ":"推移グラフ","上で選んだ期間の、数値の変化を表示します。":"上で選んだ期間の、数値の変化を表示します。","グラフにする項目":"グラフにする項目","取り込み":"取り込み","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。","ファイルを選ぶ":"ファイルを選ぶ","取り込む":"取り込む","日誌の形式":"日誌の形式","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。","項目を編集":"項目を編集","形式の名前":"形式の名前","天気を入力する":"天気を入力する","本文の見出し":"本文の見出し","＋ 項目を追加（最大6）":"＋ 項目を追加（最大6）","全員に反映する":"全員に反映する","使用中":"使用中","初期設定":"初期設定","項目名":"項目名","種類":"種類","数値":"数値","選択":"選択","チェックリスト":"チェックリスト","チェック":"チェック","短い文":"短い文","単位（kgなど）":"単位（kgなど）","単位":"単位","選択肢":"選択肢","点検項目を「、」で区切る":"点検項目を「、」で区切る","選択肢を「、」で区切る":"選択肢を「、」で区切る","この項目を削除":"この項目を削除","減らす":"減らす","増やす":"増やす","写真を外す":"写真を外す","拡大写真":"拡大写真","曜日":"曜日","投稿者":"投稿者","写真枚数":"写真枚数","訂正回数":"訂正回数","最新":"最新","最小":"最小","最大":"最大","平均":"平均","この期間に2件以上の記録があると表示します。":"この期間に2件以上の記録があると表示します。","名前と項目名を入れてください（選択項目は選択肢も必要です）":"名前と項目名を入れてください（選択項目は選択肢も必要です）","下の内容を確認して「全員に反映する」を押してください":"下の内容を確認して「全員に反映する」を押してください","取り込める新しい記録がありません":"取り込める新しい記録がありません","取り込めません。げんばログの引き継ぎデータを選んでください":"取り込めません。げんばログの引き継ぎデータを選んでください","ファイルが大きすぎます。期間を短くしてください":"ファイルが大きすぎます。期間を短くしてください","お使いのDeltaChatは書き出しに未対応です":"お使いのDeltaChatは書き出しに未対応です","受信を開始できません。開き直してください":"受信を開始できません。開き直してください","月":"月","言語":"言語","形式も取り込む":"形式も取り込む","写真の処理中です。少し待ってください":"写真の処理中です。少し待ってください","送信中…":"送信中…"},"en":{"飼育日誌":"Animal care log","様子・メモ":"Condition & notes","対象":"Subject","給餌":"Feeding","投薬":"Medication","体重":"Weight","水温・室温":"Water / room temperature","点検巡回":"Inspection rounds","所見・指摘事項":"Findings & issues","点検項目":"Inspection items","外観":"Appearance","異音":"Unusual noise","漏れ":"Leaks","温度":"Temperature","清掃状況":"Cleanliness","観察記録":"Observation log","観察メモ":"Observation notes","気温":"Air temperature","個体数":"Count","匹":"animals","書き出し":"Export","期間を選んで、チャットにファイルを送ります。":"Select a period to send a file to the chat.","全期間":"All time","表（CSV）を送る":"Send table (CSV)","写真つきまとめ（HTML）を送る":"Send photo report (HTML)","引き継ぎデータ（JSON）を送る":"Send transfer data (JSON)","推移グラフ":"Trend chart","上で選んだ期間の、数値の変化を表示します。":"Shows numeric changes over the selected period.","グラフにする項目":"Chart field","取り込み":"Import","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Add transfer data (JSON) exported from another site.","ファイルを選ぶ":"Choose a file","取り込む":"Import","日誌の形式":"Log format","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Choose fields for this chat. Changes apply to everyone.","項目を編集":"Edit fields","形式の名前":"Format name","天気を入力する":"Include weather","本文の見出し":"Text heading","＋ 項目を追加（最大6）":"＋ Add field (max 6)","全員に反映する":"Apply to everyone","使用中":"Current","初期設定":"Default","項目名":"Field name","種類":"Type","数値":"Number","選択":"Choice","チェックリスト":"Checklist","チェック":"Checkbox","短い文":"Short text","単位（kgなど）":"Unit (e.g. kg)","単位":"Unit","選択肢":"Options","点検項目を「、」で区切る":"Separate inspection items with commas","選択肢を「、」で区切る":"Separate options with commas","この項目を削除":"Delete this field","減らす":"Decrease","増やす":"Increase","写真を外す":"Remove photo","拡大写真":"Enlarged photo","曜日":"Weekday","投稿者":"Author","写真枚数":"Photo count","訂正回数":"Revision count","最新":"Latest","最小":"Minimum","最大":"Maximum","平均":"Average","この期間に2件以上の記録があると表示します。":"At least 2 numeric entries in this period are required.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Enter a format name and field names, plus options for choice fields.","下の内容を確認して「全員に反映する」を押してください":"Review the fields below, then tap Apply to everyone.","取り込める新しい記録がありません":"No new entries to import","取り込めません。げんばログの引き継ぎデータを選んでください":"Cannot import. Choose a Genba Log transfer file.","ファイルが大きすぎます。期間を短くしてください":"File too large. Select a shorter period.","お使いのDeltaChatは書き出しに未対応です":"Your Delta Chat version does not support export.","受信を開始できません。開き直してください":"Cannot start receiving. Reopen the app.","月":"Month","言語":"Language","形式も取り込む":"Also import the format","写真の処理中です。少し待ってください":"Processing photos. Please wait.","送信中…":"Sending…"},"zh":{"飼育日誌":"饲养日志","様子・メモ":"状态与备注","対象":"对象","給餌":"喂食","投薬":"用药","体重":"体重","水温・室温":"水温・室温","点検巡回":"巡检","所見・指摘事項":"发现与问题","点検項目":"检查项目","外観":"外观","異音":"异响","漏れ":"泄漏","温度":"温度","清掃状況":"清洁状况","観察記録":"观察记录","観察メモ":"观察备注","気温":"气温","個体数":"个体数量","匹":"只","書き出し":"导出","期間を選んで、チャットにファイルを送ります。":"选择时段，将文件发送到聊天。","全期間":"全部时段","表（CSV）を送る":"发送表格（CSV）","写真つきまとめ（HTML）を送る":"发送含照片的报告（HTML）","引き継ぎデータ（JSON）を送る":"发送交接数据（JSON）","推移グラフ":"趋势图","上で選んだ期間の、数値の変化を表示します。":"显示所选时段内数值的变化。","グラフにする項目":"图表项目","取り込み":"导入","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"添加从其他现场导出的交接数据（JSON）。","ファイルを選ぶ":"选择文件","取り込む":"导入","日誌の形式":"日志格式","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"选择此聊天使用的字段。更改将应用于所有成员。","項目を編集":"编辑字段","形式の名前":"格式名称","天気を入力する":"填写天气","本文の見出し":"正文标题","＋ 項目を追加（最大6）":"＋ 添加字段（最多6个）","全員に反映する":"应用于所有成员","使用中":"使用中","初期設定":"默认设置","項目名":"字段名称","種類":"类型","数値":"数值","選択":"选择","チェックリスト":"检查清单","チェック":"勾选","短い文":"短文本","単位（kgなど）":"单位（如kg）","単位":"单位","選択肢":"选项","点検項目を「、」で区切る":"用逗号分隔检查项目","選択肢を「、」で区切る":"用逗号分隔选项","この項目を削除":"删除此字段","減らす":"减少","増やす":"增加","写真を外す":"移除照片","拡大写真":"放大的照片","曜日":"星期","投稿者":"作者","写真枚数":"照片数量","訂正回数":"修改次数","最新":"最新","最小":"最小","最大":"最大","平均":"平均","この期間に2件以上の記録があると表示します。":"此时段内至少需要2条数值记录。","名前と項目名を入れてください（選択項目は選択肢も必要です）":"请填写格式和字段名称，选择字段还需填写选项。","下の内容を確認して「全員に反映する」を押してください":"请确认下面的字段，然后点击“应用于所有成员”。","取り込める新しい記録がありません":"没有可导入的新记录","取り込めません。げんばログの引き継ぎデータを選んでください":"无法导入。请选择げんばログ的交接文件。","ファイルが大きすぎます。期間を短くしてください":"文件过大。请选择更短的时段。","お使いのDeltaChatは書き出しに未対応です":"您的Delta Chat版本不支持导出。","受信を開始できません。開き直してください":"无法开始接收。请重新打开应用。","月":"月份","言語":"语言","形式も取り込む":"同时导入格式","写真の処理中です。少し待ってください":"正在处理照片，请稍候。","送信中…":"发送中…"},"ko":{"飼育日誌":"사육 일지","様子・メモ":"상태·메모","対象":"대상","給餌":"먹이 주기","投薬":"투약","体重":"체중","水温・室温":"수온·실온","点検巡回":"점검 순찰","所見・指摘事項":"소견·지적 사항","点検項目":"점검 항목","外観":"외관","異音":"이상 소음","漏れ":"누출","温度":"온도","清掃状況":"청소 상태","観察記録":"관찰 기록","観察メモ":"관찰 메모","気温":"기온","個体数":"개체 수","匹":"마리","書き出し":"내보내기","期間を選んで、チャットにファイルを送ります。":"기간을 선택하여 채팅에 파일을 보냅니다.","全期間":"전체 기간","表（CSV）を送る":"표 보내기 (CSV)","写真つきまとめ（HTML）を送る":"사진 보고서 보내기 (HTML)","引き継ぎデータ（JSON）を送る":"인계 데이터 보내기 (JSON)","推移グラフ":"추이 그래프","上で選んだ期間の、数値の変化を表示します。":"선택한 기간의 수치 변화를 표시합니다.","グラフにする項目":"그래프 항목","取り込み":"가져오기","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"다른 현장에서 내보낸 인계 데이터(JSON)를 추가합니다.","ファイルを選ぶ":"파일 선택","取り込む":"가져오기","日誌の形式":"일지 형식","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"이 채팅에서 사용할 항목을 선택합니다. 변경은 모두에게 적용됩니다.","項目を編集":"항목 편집","形式の名前":"형식 이름","天気を入力する":"날씨 입력","本文の見出し":"본문 제목","＋ 項目を追加（最大6）":"＋ 항목 추가 (최대 6개)","全員に反映する":"모두에게 적용","使用中":"사용 중","初期設定":"기본 설정","項目名":"항목 이름","種類":"종류","数値":"수치","選択":"선택","チェックリスト":"체크리스트","チェック":"체크","短い文":"짧은 글","単位（kgなど）":"단위 (예: kg)","単位":"단위","選択肢":"선택지","点検項目を「、」で区切る":"점검 항목을 쉼표로 구분","選択肢を「、」で区切る":"선택지를 쉼표로 구분","この項目を削除":"이 항목 삭제","減らす":"줄이기","増やす":"늘리기","写真を外す":"사진 제거","拡大写真":"확대 사진","曜日":"요일","投稿者":"작성자","写真枚数":"사진 수","訂正回数":"수정 횟수","最新":"최신","最小":"최소","最大":"최대","平均":"평균","この期間に2件以上の記録があると表示します。":"이 기간에 수치 기록이 2개 이상 필요합니다.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"형식과 항목 이름을 입력하세요. 선택 항목에는 선택지도 필요합니다.","下の内容を確認して「全員に反映する」を押してください":"아래 항목을 확인하고 ‘모두에게 적용’을 누르세요.","取り込める新しい記録がありません":"가져올 새 기록이 없습니다","取り込めません。げんばログの引き継ぎデータを選んでください":"가져올 수 없습니다. げんばログ 인계 파일을 선택하세요.","ファイルが大きすぎます。期間を短くしてください":"파일이 너무 큽니다. 기간을 줄이세요.","お使いのDeltaChatは書き出しに未対応です":"이 Delta Chat 버전은 내보내기를 지원하지 않습니다.","受信を開始できません。開き直してください":"수신을 시작할 수 없습니다. 앱을 다시 여세요.","月":"월","言語":"언어","形式も取り込む":"형식도 가져오기","写真の処理中です。少し待ってください":"사진 처리 중입니다. 잠시 기다려 주세요.","送信中…":"전송 중…"},"vi":{"飼育日誌":"Nhật ký chăn nuôi","様子・メモ":"Tình trạng và ghi chú","対象":"Đối tượng","給餌":"Cho ăn","投薬":"Dùng thuốc","体重":"Cân nặng","水温・室温":"Nhiệt độ nước / phòng","点検巡回":"Tuần tra kiểm tra","所見・指摘事項":"Nhận xét và vấn đề","点検項目":"Hạng mục kiểm tra","外観":"Bề ngoài","異音":"Tiếng động lạ","漏れ":"Rò rỉ","温度":"Nhiệt độ","清掃状況":"Tình trạng vệ sinh","観察記録":"Nhật ký quan sát","観察メモ":"Ghi chú quan sát","気温":"Nhiệt độ không khí","個体数":"Số cá thể","匹":"con","書き出し":"Xuất dữ liệu","期間を選んで、チャットにファイルを送ります。":"Chọn khoảng thời gian để gửi tệp vào cuộc trò chuyện.","全期間":"Toàn bộ thời gian","表（CSV）を送る":"Gửi bảng (CSV)","写真つきまとめ（HTML）を送る":"Gửi báo cáo có ảnh (HTML)","引き継ぎデータ（JSON）を送る":"Gửi dữ liệu bàn giao (JSON)","推移グラフ":"Biểu đồ xu hướng","上で選んだ期間の、数値の変化を表示します。":"Hiển thị thay đổi số liệu trong khoảng đã chọn.","グラフにする項目":"Mục biểu đồ","取り込み":"Nhập dữ liệu","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Thêm dữ liệu bàn giao (JSON) xuất từ nơi khác.","ファイルを選ぶ":"Chọn tệp","取り込む":"Nhập","日誌の形式":"Mẫu nhật ký","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Chọn các trường cho cuộc trò chuyện này. Thay đổi áp dụng cho mọi người.","項目を編集":"Sửa trường","形式の名前":"Tên mẫu","天気を入力する":"Nhập thời tiết","本文の見出し":"Tiêu đề nội dung","＋ 項目を追加（最大6）":"＋ Thêm trường (tối đa 6)","全員に反映する":"Áp dụng cho mọi người","使用中":"Đang dùng","初期設定":"Mặc định","項目名":"Tên trường","種類":"Loại","数値":"Số","選択":"Lựa chọn","チェックリスト":"Danh sách kiểm tra","チェック":"Ô đánh dấu","短い文":"Văn bản ngắn","単位（kgなど）":"Đơn vị (vd. kg)","単位":"Đơn vị","選択肢":"Các lựa chọn","点検項目を「、」で区切る":"Phân cách mục kiểm tra bằng dấu phẩy","選択肢を「、」で区切る":"Phân cách lựa chọn bằng dấu phẩy","この項目を削除":"Xóa trường này","減らす":"Giảm","増やす":"Tăng","写真を外す":"Xóa ảnh","拡大写真":"Ảnh phóng to","曜日":"Thứ","投稿者":"Người viết","写真枚数":"Số ảnh","訂正回数":"Số lần sửa","最新":"Mới nhất","最小":"Nhỏ nhất","最大":"Lớn nhất","平均":"Trung bình","この期間に2件以上の記録があると表示します。":"Cần ít nhất 2 bản ghi số trong khoảng này.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Nhập tên mẫu và tên trường, cùng lựa chọn cho trường lựa chọn.","下の内容を確認して「全員に反映する」を押してください":"Kiểm tra các trường bên dưới rồi nhấn Áp dụng cho mọi người.","取り込める新しい記録がありません":"Không có bản ghi mới để nhập","取り込めません。げんばログの引き継ぎデータを選んでください":"Không thể nhập. Hãy chọn tệp bàn giao của Genba Log.","ファイルが大きすぎます。期間を短くしてください":"Tệp quá lớn. Hãy chọn khoảng thời gian ngắn hơn.","お使いのDeltaChatは書き出しに未対応です":"Phiên bản Delta Chat này không hỗ trợ xuất dữ liệu.","受信を開始できません。開き直してください":"Không thể bắt đầu nhận. Hãy mở lại ứng dụng.","月":"Tháng","言語":"Ngôn ngữ","形式も取り込む":"Nhập cả mẫu","写真の処理中です。少し待ってください":"Đang xử lý ảnh. Vui lòng chờ.","送信中…":"Đang gửi…"},"fil":{"飼育日誌":"Tala ng pag-aalaga","様子・メモ":"Kalagayan at mga tala","対象":"Paksa","給餌":"Pagpapakain","投薬":"Gamot","体重":"Timbang","水温・室温":"Temperatura ng tubig / silid","点検巡回":"Rondang inspeksiyon","所見・指摘事項":"Mga natuklasan at isyu","点検項目":"Mga susuriin","外観":"Hitsura","異音":"Kakaibang ingay","漏れ":"Tagas","温度":"Temperatura","清掃状況":"Kalinisan","観察記録":"Tala ng obserbasyon","観察メモ":"Mga tala ng obserbasyon","気温":"Temperatura ng hangin","個体数":"Bilang","匹":"hayop","書き出し":"I-export","期間を選んで、チャットにファイルを送ります。":"Pumili ng panahon para magpadala ng file sa chat.","全期間":"Lahat ng panahon","表（CSV）を送る":"Ipadala ang talahanayan (CSV)","写真つきまとめ（HTML）を送る":"Ipadala ang ulat na may larawan (HTML)","引き継ぎデータ（JSON）を送る":"Ipadala ang datos para sa paglilipat (JSON)","推移グラフ":"Tsart ng pagbabago","上で選んだ期間の、数値の変化を表示します。":"Ipinapakita ang pagbabago ng mga numero sa napiling panahon.","グラフにする項目":"Field sa tsart","取り込み":"I-import","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Magdagdag ng datos (JSON) na na-export mula sa ibang lugar.","ファイルを選ぶ":"Pumili ng file","取り込む":"I-import","日誌の形式":"Format ng tala","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Pumili ng mga field para sa chat. Malalapat ang pagbabago sa lahat.","項目を編集":"Baguhin ang mga field","形式の名前":"Pangalan ng format","天気を入力する":"Isama ang panahon","本文の見出し":"Pamagat ng nilalaman","＋ 項目を追加（最大6）":"＋ Magdagdag ng field (hanggang 6)","全員に反映する":"Ilapat sa lahat","使用中":"Kasalukuyan","初期設定":"Default","項目名":"Pangalan ng field","種類":"Uri","数値":"Numero","選択":"Pagpipilian","チェックリスト":"Checklist","チェック":"Checkbox","短い文":"Maikling teksto","単位（kgなど）":"Yunit (hal. kg)","単位":"Yunit","選択肢":"Mga opsyon","点検項目を「、」で区切る":"Paghiwalayin ang mga susuriin gamit ang kuwit","選択肢を「、」で区切る":"Paghiwalayin ang mga opsyon gamit ang kuwit","この項目を削除":"Burahin ang field na ito","減らす":"Bawasan","増やす":"Dagdagan","写真を外す":"Alisin ang larawan","拡大写真":"Pinalaking larawan","曜日":"Araw","投稿者":"May-akda","写真枚数":"Bilang ng larawan","訂正回数":"Bilang ng pagbabago","最新":"Pinakabago","最小":"Pinakamababa","最大":"Pinakamataas","平均":"Karaniwan","この期間に2件以上の記録があると表示します。":"Kailangan ng hindi bababa sa 2 numerikong tala sa panahong ito.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Ilagay ang pangalan ng format at mga field, at mga opsyon para sa pagpipilian.","下の内容を確認して「全員に反映する」を押してください":"Suriin ang mga field sa ibaba, saka pindutin ang Ilapat sa lahat.","取り込める新しい記録がありません":"Walang bagong talang mai-import","取り込めません。げんばログの引き継ぎデータを選んでください":"Hindi ma-import. Pumili ng Genba Log transfer file.","ファイルが大きすぎます。期間を短くしてください":"Masyadong malaki ang file. Pumili ng mas maikling panahon.","お使いのDeltaChatは書き出しに未対応です":"Hindi suportado ng bersiyong ito ng Delta Chat ang pag-export.","受信を開始できません。開き直してください":"Hindi masimulan ang pagtanggap. Buksan muli ang app.","月":"Buwan","言語":"Wika","形式も取り込む":"I-import din ang format","写真の処理中です。少し待ってください":"Pinoproseso ang mga larawan. Maghintay.","送信中…":"Ipinapadala…"},"pt":{"飼育日誌":"Diário de criação","様子・メモ":"Estado e notas","対象":"Indivíduo","給餌":"Alimentação","投薬":"Medicação","体重":"Peso","水温・室温":"Temperatura da água / ambiente","点検巡回":"Ronda de inspeção","所見・指摘事項":"Constatações e problemas","点検項目":"Itens de inspeção","外観":"Aparência","異音":"Ruído anormal","漏れ":"Vazamentos","温度":"Temperatura","清掃状況":"Limpeza","観察記録":"Registro de observação","観察メモ":"Notas de observação","気温":"Temperatura do ar","個体数":"Quantidade de indivíduos","匹":"animais","書き出し":"Exportar","期間を選んで、チャットにファイルを送ります。":"Selecione um período para enviar um arquivo ao chat.","全期間":"Todo o período","表（CSV）を送る":"Enviar tabela (CSV)","写真つきまとめ（HTML）を送る":"Enviar relatório com fotos (HTML)","引き継ぎデータ（JSON）を送る":"Enviar dados de transferência (JSON)","推移グラフ":"Gráfico de evolução","上で選んだ期間の、数値の変化を表示します。":"Mostra a variação dos valores no período selecionado.","グラフにする項目":"Campo do gráfico","取り込み":"Importar","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Adicione dados de transferência (JSON) exportados de outro local.","ファイルを選ぶ":"Escolher arquivo","取り込む":"Importar","日誌の形式":"Formato do diário","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Escolha os campos deste chat. As alterações se aplicam a todos.","項目を編集":"Editar campos","形式の名前":"Nome do formato","天気を入力する":"Incluir clima","本文の見出し":"Título do texto","＋ 項目を追加（最大6）":"＋ Adicionar campo (máx. 6)","全員に反映する":"Aplicar a todos","使用中":"Atual","初期設定":"Padrão","項目名":"Nome do campo","種類":"Tipo","数値":"Número","選択":"Seleção","チェックリスト":"Lista de verificação","チェック":"Caixa de seleção","短い文":"Texto curto","単位（kgなど）":"Unidade (ex.: kg)","単位":"Unidade","選択肢":"Opções","点検項目を「、」で区切る":"Separe os itens de inspeção por vírgulas","選択肢を「、」で区切る":"Separe as opções por vírgulas","この項目を削除":"Excluir este campo","減らす":"Diminuir","増やす":"Aumentar","写真を外す":"Remover foto","拡大写真":"Foto ampliada","曜日":"Dia da semana","投稿者":"Autor","写真枚数":"Número de fotos","訂正回数":"Número de revisões","最新":"Mais recente","最小":"Mínimo","最大":"Máximo","平均":"Média","この期間に2件以上の記録があると表示します。":"São necessários pelo menos 2 registros numéricos neste período.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Preencha o nome do formato e dos campos, e as opções dos campos de seleção.","下の内容を確認して「全員に反映する」を押してください":"Confira os campos abaixo e toque em Aplicar a todos.","取り込める新しい記録がありません":"Nenhum registro novo para importar","取り込めません。げんばログの引き継ぎデータを選んでください":"Não foi possível importar. Escolha um arquivo de transferência do Genba Log.","ファイルが大きすぎます。期間を短くしてください":"Arquivo muito grande. Selecione um período menor.","お使いのDeltaChatは書き出しに未対応です":"Sua versão do Delta Chat não permite exportar.","受信を開始できません。開き直してください":"Não foi possível iniciar a recepção. Reabra o aplicativo.","月":"Mês","言語":"Idioma","形式も取り込む":"Importar também o formato","写真の処理中です。少し待ってください":"Processando fotos. Aguarde.","送信中…":"Enviando…"},"ne":{"飼育日誌":"पशुपालन दैनिकी","様子・メモ":"अवस्था र टिप्पणी","対象":"विषय","給餌":"खुवाउने","投薬":"औषधि दिने","体重":"तौल","水温・室温":"पानी / कोठाको तापक्रम","点検巡回":"निरीक्षण गस्ती","所見・指摘事項":"निष्कर्ष र समस्या","点検項目":"निरीक्षणका बुँदा","外観":"बाहिरी रूप","異音":"असामान्य आवाज","漏れ":"चुहावट","温度":"तापक्रम","清掃状況":"सरसफाइको अवस्था","観察記録":"अवलोकन अभिलेख","観察メモ":"अवलोकन टिप्पणी","気温":"हावाको तापक्रम","個体数":"जीवको संख्या","匹":"वटा","書き出し":"निर्यात","期間を選んで、チャットにファイルを送ります。":"च्याटमा फाइल पठाउन अवधि छान्नुहोस्।","全期間":"सबै अवधि","表（CSV）を送る":"तालिका पठाउने (CSV)","写真つきまとめ（HTML）を送る":"फोटोसहित प्रतिवेदन पठाउने (HTML)","引き継ぎデータ（JSON）を送る":"हस्तान्तरण डेटा पठाउने (JSON)","推移グラフ":"प्रवृत्ति ग्राफ","上で選んだ期間の、数値の変化を表示します。":"चयन गरिएको अवधिमा संख्यात्मक परिवर्तन देखाउँछ।","グラフにする項目":"ग्राफको फिल्ड","取り込み":"आयात","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"अर्को स्थानबाट निर्यात गरिएको हस्तान्तरण डेटा (JSON) थप्नुहोस्।","ファイルを選ぶ":"फाइल छान्ने","取り込む":"आयात गर्ने","日誌の形式":"दैनिकीको ढाँचा","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"यस च्याटका फिल्ड छान्नुहोस्। परिवर्तन सबैमा लागू हुन्छ।","項目を編集":"फिल्ड सम्पादन","形式の名前":"ढाँचाको नाम","天気を入力する":"मौसम समावेश गर्ने","本文の見出し":"पाठको शीर्षक","＋ 項目を追加（最大6）":"＋ फिल्ड थप्ने (अधिकतम ६)","全員に反映する":"सबैमा लागू गर्ने","使用中":"हाल प्रयोगमा","初期設定":"पूर्वनिर्धारित","項目名":"फिल्डको नाम","種類":"प्रकार","数値":"संख्या","選択":"छनोट","チェックリスト":"जाँचसूची","チェック":"चेकबक्स","短い文":"छोटो पाठ","単位（kgなど）":"एकाइ (जस्तै kg)","単位":"एकाइ","選択肢":"विकल्पहरू","点検項目を「、」で区切る":"निरीक्षणका बुँदा अल्पविरामले छुट्याउनुहोस्","選択肢を「、」で区切る":"विकल्पहरू अल्पविरामले छुट्याउनुहोस्","この項目を削除":"यो फिल्ड मेटाउने","減らす":"घटाउने","増やす":"बढाउने","写真を外す":"फोटो हटाउने","拡大写真":"ठूलो फोटो","曜日":"बार","投稿者":"लेखक","写真枚数":"फोटो संख्या","訂正回数":"संशोधन संख्या","最新":"नवीनतम","最小":"न्यूनतम","最大":"अधिकतम","平均":"औसत","この期間に2件以上の記録があると表示します。":"यस अवधिमा कम्तीमा २ संख्यात्मक अभिलेख चाहिन्छ।","名前と項目名を入れてください（選択項目は選択肢も必要です）":"ढाँचा र फिल्डको नाम तथा छनोट फिल्डका विकल्प भर्नुहोस्।","下の内容を確認して「全員に反映する」を押してください":"तलका फिल्ड जाँचेर सबैमा लागू गर्ने थिच्नुहोस्।","取り込める新しい記録がありません":"आयात गर्न नयाँ अभिलेख छैन","取り込めません。げんばログの引き継ぎデータを選んでください":"आयात गर्न सकिएन। Genba Log को हस्तान्तरण फाइल छान्नुहोस्।","ファイルが大きすぎます。期間を短くしてください":"फाइल धेरै ठूलो छ। छोटो अवधि छान्नुहोस्।","お使いのDeltaChatは書き出しに未対応です":"तपाईंको Delta Chat संस्करणले निर्यात समर्थन गर्दैन।","受信を開始できません。開き直してください":"प्राप्ति सुरु गर्न सकिएन। एप फेरि खोल्नुहोस्।","月":"महिना","言語":"भाषा","形式も取り込む":"ढाँचा पनि आयात गर्ने","写真の処理中です。少し待ってください":"फोटो प्रशोधन हुँदैछ। पर्खनुहोस्।","送信中…":"पठाउँदै…"},"es":{"飼育日誌":"Diario de cría","様子・メモ":"Estado y notas","対象":"Sujeto","給餌":"Alimentación","投薬":"Medicación","体重":"Peso","水温・室温":"Temperatura del agua / ambiente","点検巡回":"Ronda de inspección","所見・指摘事項":"Hallazgos e incidencias","点検項目":"Elementos de inspección","外観":"Aspecto","異音":"Ruido anormal","漏れ":"Fugas","温度":"Temperatura","清掃状況":"Limpieza","観察記録":"Registro de observación","観察メモ":"Notas de observación","気温":"Temperatura del aire","個体数":"Número de individuos","匹":"animales","書き出し":"Exportar","期間を選んで、チャットにファイルを送ります。":"Selecciona un período para enviar un archivo al chat.","全期間":"Todo el período","表（CSV）を送る":"Enviar tabla (CSV)","写真つきまとめ（HTML）を送る":"Enviar informe con fotos (HTML)","引き継ぎデータ（JSON）を送る":"Enviar datos de traspaso (JSON)","推移グラフ":"Gráfico de evolución","上で選んだ期間の、数値の変化を表示します。":"Muestra los cambios numéricos del período seleccionado.","グラフにする項目":"Campo del gráfico","取り込み":"Importar","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Añade datos de traspaso (JSON) exportados desde otro lugar.","ファイルを選ぶ":"Elegir archivo","取り込む":"Importar","日誌の形式":"Formato del diario","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Elige los campos de este chat. Los cambios se aplican a todos.","項目を編集":"Editar campos","形式の名前":"Nombre del formato","天気を入力する":"Incluir clima","本文の見出し":"Título del texto","＋ 項目を追加（最大6）":"＋ Añadir campo (máx. 6)","全員に反映する":"Aplicar a todos","使用中":"Actual","初期設定":"Predeterminado","項目名":"Nombre del campo","種類":"Tipo","数値":"Número","選択":"Selección","チェックリスト":"Lista de verificación","チェック":"Casilla","短い文":"Texto breve","単位（kgなど）":"Unidad (p. ej., kg)","単位":"Unidad","選択肢":"Opciones","点検項目を「、」で区切る":"Separa los elementos de inspección con comas","選択肢を「、」で区切る":"Separa las opciones con comas","この項目を削除":"Eliminar este campo","減らす":"Disminuir","増やす":"Aumentar","写真を外す":"Quitar foto","拡大写真":"Foto ampliada","曜日":"Día de la semana","投稿者":"Autor","写真枚数":"Número de fotos","訂正回数":"Número de revisiones","最新":"Último","最小":"Mínimo","最大":"Máximo","平均":"Media","この期間に2件以上の記録があると表示します。":"Se necesitan al menos 2 registros numéricos en este período.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Introduce los nombres del formato y los campos, y las opciones de los campos de selección.","下の内容を確認して「全員に反映する」を押してください":"Revisa los campos y pulsa Aplicar a todos.","取り込める新しい記録がありません":"No hay registros nuevos para importar","取り込めません。げんばログの引き継ぎデータを選んでください":"No se puede importar. Elige un archivo de traspaso de Genba Log.","ファイルが大きすぎます。期間を短くしてください":"Archivo demasiado grande. Selecciona un período más corto.","お使いのDeltaChatは書き出しに未対応です":"Tu versión de Delta Chat no admite la exportación.","受信を開始できません。開き直してください":"No se puede iniciar la recepción. Vuelve a abrir la app.","月":"Mes","言語":"Idioma","形式も取り込む":"Importar también el formato","写真の処理中です。少し待ってください":"Procesando fotos. Espera.","送信中…":"Enviando…"},"fr":{"飼育日誌":"Journal d’élevage","様子・メモ":"État et notes","対象":"Sujet","給餌":"Alimentation","投薬":"Médication","体重":"Poids","水温・室温":"Température de l’eau / ambiante","点検巡回":"Ronde d’inspection","所見・指摘事項":"Constats et problèmes","点検項目":"Points de contrôle","外観":"Aspect","異音":"Bruit anormal","漏れ":"Fuites","温度":"Température","清掃状況":"Propreté","観察記録":"Journal d’observation","観察メモ":"Notes d’observation","気温":"Température de l’air","個体数":"Nombre d’individus","匹":"animaux","書き出し":"Exporter","期間を選んで、チャットにファイルを送ります。":"Sélectionnez une période pour envoyer un fichier au chat.","全期間":"Toute la période","表（CSV）を送る":"Envoyer le tableau (CSV)","写真つきまとめ（HTML）を送る":"Envoyer le rapport avec photos (HTML)","引き継ぎデータ（JSON）を送る":"Envoyer les données de transfert (JSON)","推移グラフ":"Graphique d’évolution","上で選んだ期間の、数値の変化を表示します。":"Affiche les variations numériques sur la période sélectionnée.","グラフにする項目":"Champ du graphique","取り込み":"Importer","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Ajoutez des données de transfert (JSON) exportées d’un autre site.","ファイルを選ぶ":"Choisir un fichier","取り込む":"Importer","日誌の形式":"Format du journal","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Choisissez les champs de ce chat. Les modifications s’appliquent à tous.","項目を編集":"Modifier les champs","形式の名前":"Nom du format","天気を入力する":"Inclure la météo","本文の見出し":"Titre du texte","＋ 項目を追加（最大6）":"＋ Ajouter un champ (max. 6)","全員に反映する":"Appliquer à tous","使用中":"Actuel","初期設定":"Par défaut","項目名":"Nom du champ","種類":"Type","数値":"Nombre","選択":"Choix","チェックリスト":"Liste de contrôle","チェック":"Case à cocher","短い文":"Texte court","単位（kgなど）":"Unité (ex. kg)","単位":"Unité","選択肢":"Options","点検項目を「、」で区切る":"Séparez les points de contrôle par des virgules","選択肢を「、」で区切る":"Séparez les options par des virgules","この項目を削除":"Supprimer ce champ","減らす":"Diminuer","増やす":"Augmenter","写真を外す":"Retirer la photo","拡大写真":"Photo agrandie","曜日":"Jour de la semaine","投稿者":"Auteur","写真枚数":"Nombre de photos","訂正回数":"Nombre de révisions","最新":"Dernier","最小":"Minimum","最大":"Maximum","平均":"Moyenne","この期間に2件以上の記録があると表示します。":"Il faut au moins 2 entrées numériques sur cette période.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Renseignez les noms du format et des champs, ainsi que les options des champs de choix.","下の内容を確認して「全員に反映する」を押してください":"Vérifiez les champs ci-dessous, puis appuyez sur Appliquer à tous.","取り込める新しい記録がありません":"Aucune nouvelle entrée à importer","取り込めません。げんばログの引き継ぎデータを選んでください":"Import impossible. Choisissez un fichier de transfert Genba Log.","ファイルが大きすぎます。期間を短くしてください":"Fichier trop volumineux. Sélectionnez une période plus courte.","お使いのDeltaChatは書き出しに未対応です":"Votre version de Delta Chat ne permet pas l’exportation.","受信を開始できません。開き直してください":"Impossible de démarrer la réception. Rouvrez l’application.","月":"Mois","言語":"Langue","形式も取り込む":"Importer aussi le format","写真の処理中です。少し待ってください":"Traitement des photos. Veuillez patienter.","送信中…":"Envoi…"},"de":{"飼育日誌":"Tierhaltungsprotokoll","様子・メモ":"Zustand und Notizen","対象":"Subjekt","給餌":"Fütterung","投薬":"Medikation","体重":"Gewicht","水温・室温":"Wasser- / Raumtemperatur","点検巡回":"Kontrollrundgang","所見・指摘事項":"Befunde und Probleme","点検項目":"Prüfpunkte","外観":"Aussehen","異音":"Ungewöhnliche Geräusche","漏れ":"Lecks","温度":"Temperatur","清掃状況":"Sauberkeit","観察記録":"Beobachtungsprotokoll","観察メモ":"Beobachtungsnotizen","気温":"Lufttemperatur","個体数":"Anzahl der Individuen","匹":"Tiere","書き出し":"Exportieren","期間を選んで、チャットにファイルを送ります。":"Zeitraum wählen, um eine Datei an den Chat zu senden.","全期間":"Gesamter Zeitraum","表（CSV）を送る":"Tabelle senden (CSV)","写真つきまとめ（HTML）を送る":"Fotobericht senden (HTML)","引き継ぎデータ（JSON）を送る":"Übergabedaten senden (JSON)","推移グラフ":"Verlaufsdiagramm","上で選んだ期間の、数値の変化を表示します。":"Zeigt Zahlenänderungen im ausgewählten Zeitraum.","グラフにする項目":"Diagrammfeld","取り込み":"Importieren","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Übergabedaten (JSON) von einem anderen Standort hinzufügen.","ファイルを選ぶ":"Datei auswählen","取り込む":"Importieren","日誌の形式":"Protokollformat","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Felder für diesen Chat wählen. Änderungen gelten für alle.","項目を編集":"Felder bearbeiten","形式の名前":"Formatname","天気を入力する":"Wetter erfassen","本文の見出し":"Textüberschrift","＋ 項目を追加（最大6）":"＋ Feld hinzufügen (max. 6)","全員に反映する":"Für alle übernehmen","使用中":"Aktuell","初期設定":"Standard","項目名":"Feldname","種類":"Typ","数値":"Zahl","選択":"Auswahl","チェックリスト":"Prüfliste","チェック":"Kontrollkästchen","短い文":"Kurztext","単位（kgなど）":"Einheit (z. B. kg)","単位":"Einheit","選択肢":"Optionen","点検項目を「、」で区切る":"Prüfpunkte durch Kommas trennen","選択肢を「、」で区切る":"Optionen durch Kommas trennen","この項目を削除":"Dieses Feld löschen","減らす":"Verringern","増やす":"Erhöhen","写真を外す":"Foto entfernen","拡大写真":"Vergrößertes Foto","曜日":"Wochentag","投稿者":"Autor","写真枚数":"Fotoanzahl","訂正回数":"Anzahl der Änderungen","最新":"Zuletzt","最小":"Minimum","最大":"Maximum","平均":"Durchschnitt","この期間に2件以上の記録があると表示します。":"Mindestens 2 Zahleneinträge in diesem Zeitraum erforderlich.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Format- und Feldnamen sowie Optionen für Auswahlfelder eingeben.","下の内容を確認して「全員に反映する」を押してください":"Felder unten prüfen und Für alle übernehmen antippen.","取り込める新しい記録がありません":"Keine neuen Einträge zum Importieren","取り込めません。げんばログの引き継ぎデータを選んでください":"Import nicht möglich. Eine Genba-Log-Übergabedatei auswählen.","ファイルが大きすぎます。期間を短くしてください":"Datei zu groß. Einen kürzeren Zeitraum wählen.","お使いのDeltaChatは書き出しに未対応です":"Diese Delta-Chat-Version unterstützt keinen Export.","受信を開始できません。開き直してください":"Empfang kann nicht gestartet werden. App erneut öffnen.","月":"Monat","言語":"Sprache","形式も取り込む":"Format ebenfalls importieren","写真の処理中です。少し待ってください":"Fotos werden verarbeitet. Bitte warten.","送信中…":"Wird gesendet…"},"ar":{"飼育日誌":"سجل رعاية الحيوانات","様子・メモ":"الحالة والملاحظات","対象":"الموضوع","給餌":"التغذية","投薬":"إعطاء الدواء","体重":"الوزن","水温・室温":"حرارة الماء / الغرفة","点検巡回":"جولة تفتيش","所見・指摘事項":"النتائج والمشكلات","点検項目":"بنود الفحص","外観":"المظهر","異音":"ضوضاء غير طبيعية","漏れ":"تسرب","温度":"درجة الحرارة","清掃状況":"النظافة","観察記録":"سجل المراقبة","観察メモ":"ملاحظات المراقبة","気温":"حرارة الهواء","個体数":"عدد الأفراد","匹":"حيوانات","書き出し":"تصدير","期間を選んで、チャットにファイルを送ります。":"اختر فترة لإرسال ملف إلى الدردشة.","全期間":"كل الفترات","表（CSV）を送る":"إرسال جدول (CSV)","写真つきまとめ（HTML）を送る":"إرسال تقرير بالصور (HTML)","引き継ぎデータ（JSON）を送る":"إرسال بيانات التسليم (JSON)","推移グラフ":"مخطط الاتجاه","上で選んだ期間の、数値の変化を表示します。":"يعرض التغيرات الرقمية خلال الفترة المحددة.","グラフにする項目":"حقل المخطط","取り込み":"استيراد","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"أضف بيانات تسليم (JSON) مُصدَّرة من موقع آخر.","ファイルを選ぶ":"اختيار ملف","取り込む":"استيراد","日誌の形式":"تنسيق السجل","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"اختر حقول هذه الدردشة. تُطبَّق التغييرات على الجميع.","項目を編集":"تعديل الحقول","形式の名前":"اسم التنسيق","天気を入力する":"تضمين الطقس","本文の見出し":"عنوان النص","＋ 項目を追加（最大6）":"＋ إضافة حقل (حتى 6)","全員に反映する":"تطبيق على الجميع","使用中":"الحالي","初期設定":"الافتراضي","項目名":"اسم الحقل","種類":"النوع","数値":"رقم","選択":"اختيار","チェックリスト":"قائمة فحص","チェック":"مربع اختيار","短い文":"نص قصير","単位（kgなど）":"الوحدة (مثل kg)","単位":"الوحدة","選択肢":"الخيارات","点検項目を「、」で区切る":"افصل بنود الفحص بفواصل","選択肢を「、」で区切る":"افصل الخيارات بفواصل","この項目を削除":"حذف هذا الحقل","減らす":"تقليل","増やす":"زيادة","写真を外す":"إزالة الصورة","拡大写真":"صورة مكبرة","曜日":"يوم الأسبوع","投稿者":"الكاتب","写真枚数":"عدد الصور","訂正回数":"عدد التعديلات","最新":"الأحدث","最小":"الأدنى","最大":"الأعلى","平均":"المتوسط","この期間に2件以上の記録があると表示します。":"يلزم سجلان رقميان على الأقل خلال هذه الفترة.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"أدخل اسم التنسيق وأسماء الحقول وخيارات حقول الاختيار.","下の内容を確認して「全員に反映する」を押してください":"راجع الحقول أدناه ثم اضغط تطبيق على الجميع.","取り込める新しい記録がありません":"لا توجد سجلات جديدة للاستيراد","取り込めません。げんばログの引き継ぎデータを選んでください":"تعذر الاستيراد. اختر ملف تسليم Genba Log.","ファイルが大きすぎます。期間を短くしてください":"الملف كبير جدًا. اختر فترة أقصر.","お使いのDeltaChatは書き出しに未対応です":"إصدار Delta Chat لديك لا يدعم التصدير.","受信を開始できません。開き直してください":"تعذر بدء الاستلام. أعد فتح التطبيق.","月":"الشهر","言語":"اللغة","形式も取り込む":"استيراد التنسيق أيضًا","写真の処理中です。少し待ってください":"جارٍ معالجة الصور. يرجى الانتظار.","送信中…":"جارٍ الإرسال…"},"id":{"飼育日誌":"Catatan pemeliharaan","様子・メモ":"Kondisi dan catatan","対象":"Objek","給餌":"Pemberian pakan","投薬":"Pemberian obat","体重":"Berat badan","水温・室温":"Suhu air / ruangan","点検巡回":"Patroli pemeriksaan","所見・指摘事項":"Temuan dan masalah","点検項目":"Butir pemeriksaan","外観":"Tampilan","異音":"Suara tidak normal","漏れ":"Kebocoran","温度":"Suhu","清掃状況":"Kebersihan","観察記録":"Catatan pengamatan","観察メモ":"Catatan observasi","気温":"Suhu udara","個体数":"Jumlah individu","匹":"ekor","書き出し":"Ekspor","期間を選んで、チャットにファイルを送ります。":"Pilih periode untuk mengirim file ke chat.","全期間":"Semua periode","表（CSV）を送る":"Kirim tabel (CSV)","写真つきまとめ（HTML）を送る":"Kirim laporan dengan foto (HTML)","引き継ぎデータ（JSON）を送る":"Kirim data serah terima (JSON)","推移グラフ":"Grafik tren","上で選んだ期間の、数値の変化を表示します。":"Menampilkan perubahan angka pada periode yang dipilih.","グラフにする項目":"Kolom grafik","取り込み":"Impor","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Tambahkan data serah terima (JSON) dari lokasi lain.","ファイルを選ぶ":"Pilih file","取り込む":"Impor","日誌の形式":"Format catatan","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Pilih kolom untuk chat ini. Perubahan berlaku untuk semua orang.","項目を編集":"Ubah kolom","形式の名前":"Nama format","天気を入力する":"Sertakan cuaca","本文の見出し":"Judul teks","＋ 項目を追加（最大6）":"＋ Tambah kolom (maks. 6)","全員に反映する":"Terapkan ke semua","使用中":"Saat ini","初期設定":"Bawaan","項目名":"Nama kolom","種類":"Jenis","数値":"Angka","選択":"Pilihan","チェックリスト":"Daftar periksa","チェック":"Kotak centang","短い文":"Teks singkat","単位（kgなど）":"Satuan (mis. kg)","単位":"Satuan","選択肢":"Opsi","点検項目を「、」で区切る":"Pisahkan butir pemeriksaan dengan koma","選択肢を「、」で区切る":"Pisahkan opsi dengan koma","この項目を削除":"Hapus kolom ini","減らす":"Kurangi","増やす":"Tambah","写真を外す":"Hapus foto","拡大写真":"Foto diperbesar","曜日":"Hari","投稿者":"Penulis","写真枚数":"Jumlah foto","訂正回数":"Jumlah revisi","最新":"Terbaru","最小":"Minimum","最大":"Maksimum","平均":"Rata-rata","この期間に2件以上の記録があると表示します。":"Diperlukan minimal 2 catatan angka pada periode ini.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Isi nama format dan kolom, serta opsi untuk kolom pilihan.","下の内容を確認して「全員に反映する」を押してください":"Periksa kolom di bawah, lalu tekan Terapkan ke semua.","取り込める新しい記録がありません":"Tidak ada catatan baru untuk diimpor","取り込めません。げんばログの引き継ぎデータを選んでください":"Tidak bisa mengimpor. Pilih file serah terima Genba Log.","ファイルが大きすぎます。期間を短くしてください":"File terlalu besar. Pilih periode lebih pendek.","お使いのDeltaChatは書き出しに未対応です":"Versi Delta Chat Anda tidak mendukung ekspor.","受信を開始できません。開き直してください":"Tidak bisa mulai menerima. Buka kembali aplikasi.","月":"Bulan","言語":"Bahasa","形式も取り込む":"Impor juga format","写真の処理中です。少し待ってください":"Memproses foto. Mohon tunggu.","送信中…":"Mengirim…"},"ru":{"飼育日誌":"Журнал ухода за животными","様子・メモ":"Состояние и заметки","対象":"Объект","給餌":"Кормление","投薬":"Приём лекарств","体重":"Масса тела","水温・室温":"Температура воды / помещения","点検巡回":"Проверочный обход","所見・指摘事項":"Наблюдения и замечания","点検項目":"Пункты проверки","外観":"Внешний вид","異音":"Посторонний шум","漏れ":"Утечки","温度":"Температура","清掃状況":"Чистота","観察記録":"Журнал наблюдений","観察メモ":"Заметки наблюдения","気温":"Температура воздуха","個体数":"Число особей","匹":"особей","書き出し":"Экспорт","期間を選んで、チャットにファイルを送ります。":"Выберите период для отправки файла в чат.","全期間":"Весь период","表（CSV）を送る":"Отправить таблицу (CSV)","写真つきまとめ（HTML）を送る":"Отправить отчёт с фото (HTML)","引き継ぎデータ（JSON）を送る":"Отправить данные передачи (JSON)","推移グラフ":"График изменений","上で選んだ期間の、数値の変化を表示します。":"Показывает изменение чисел за выбранный период.","グラフにする項目":"Поле графика","取り込み":"Импорт","別の現場で書き出した引き継ぎデータ（JSON）を、この現場に追加します。":"Добавьте данные передачи (JSON) с другого объекта.","ファイルを選ぶ":"Выбрать файл","取り込む":"Импортировать","日誌の形式":"Формат журнала","この現場（チャット）で使う入力項目を選びます。変更すると全員の画面に反映されます。":"Выберите поля для этого чата. Изменения применяются ко всем.","項目を編集":"Изменить поля","形式の名前":"Название формата","天気を入力する":"Указывать погоду","本文の見出し":"Заголовок текста","＋ 項目を追加（最大6）":"＋ Добавить поле (макс. 6)","全員に反映する":"Применить ко всем","使用中":"Текущий","初期設定":"По умолчанию","項目名":"Название поля","種類":"Тип","数値":"Число","選択":"Выбор","チェックリスト":"Список проверки","チェック":"Флажок","短い文":"Короткий текст","単位（kgなど）":"Единица (напр., kg)","単位":"Единица","選択肢":"Варианты","点検項目を「、」で区切る":"Разделите пункты проверки запятыми","選択肢を「、」で区切る":"Разделите варианты запятыми","この項目を削除":"Удалить это поле","減らす":"Уменьшить","増やす":"Увеличить","写真を外す":"Убрать фото","拡大写真":"Увеличенное фото","曜日":"День недели","投稿者":"Автор","写真枚数":"Число фото","訂正回数":"Число правок","最新":"Последнее","最小":"Минимум","最大":"Максимум","平均":"Среднее","この期間に2件以上の記録があると表示します。":"Нужно не менее 2 числовых записей за этот период.","名前と項目名を入れてください（選択項目は選択肢も必要です）":"Введите названия формата и полей, а также варианты для полей выбора.","下の内容を確認して「全員に反映する」を押してください":"Проверьте поля ниже и нажмите «Применить ко всем».","取り込める新しい記録がありません":"Нет новых записей для импорта","取り込めません。げんばログの引き継ぎデータを選んでください":"Не удалось импортировать. Выберите файл передачи Genba Log.","ファイルが大きすぎます。期間を短くしてください":"Файл слишком большой. Выберите более короткий период.","お使いのDeltaChatは書き出しに未対応です":"Ваша версия Delta Chat не поддерживает экспорт.","受信を開始できません。開き直してください":"Не удалось начать приём. Откройте приложение заново.","月":"Месяц","言語":"Язык","形式も取り込む":"Также импортировать формат","写真の処理中です。少し待ってください":"Обработка фото. Подождите.","送信中…":"Отправка…"}};
+
+</script>
+<script>
+const WORDING_TEXT={"ja":{"表現の設定":"表現の設定","年代・読みやすさ":"年代・読みやすさ","小学生向け":"小学生向け","中高生向け":"中高生向け","一般向け":"一般向け","シニア向け":"シニア向け","仕事・用途":"仕事・用途","形式に合わせる":"形式に合わせる","日記・学校生活":"日記・学校生活","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"この端末の表示だけを変えます。記録やほかの人の設定は変わりません。","表示例":"表示例","表現を自分で調整":"表現を自分で調整","記録を残すボタン":"記録を残すボタン","編集ボタン":"編集ボタン","削除ボタン":"削除ボタン","本文の見出し":"本文の見出し","空欄なら選んだ表現を使います。":"空欄なら選んだ表現を使います。","表現を初期設定に戻す":"表現を初期設定に戻す","日記":"日記","今日のできごと":"今日のできごと","日記をのこす":"日記をのこす","かきなおす":"かきなおす","けす":"けす","おもいで":"おもいで","ことばのせってい":"ことばのせってい","かく":"かく","やめる":"やめる","かきなおして のこす":"かきなおして のこす","もういちど おすと けせます":"もういちど おすと けせます","のこしました":"のこしました","かきなおしました":"かきなおしました","けしました":"けしました","日記をかく":"日記をかく","保存する":"保存する","修正する":"修正する","保存・取り込み":"保存・取り込み","使い方の設定":"使い方の設定","記録を保存する":"記録を保存する","内容を直す":"内容を直す","記録を消す":"記録を消す","内容を保存する":"内容を保存する","記録を追加する":"記録を追加する","記録一覧":"記録一覧","下書きの例":"下書きの例","できごとや、気づいたことを書いてみよう。":"できごとや、気づいたことを書いてみよう。","作業や気づいたことを記入してください。":"作業や気づいたことを記入してください。"},"en":{"表現の設定":"Wording settings","年代・読みやすさ":"Age and readability","小学生向け":"Elementary school","中高生向け":"Teens","一般向け":"General","シニア向け":"Seniors","仕事・用途":"Work or purpose","形式に合わせる":"Match log format","日記・学校生活":"Diary / school life","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Changes wording on this device only. Entries and other members’ settings stay the same.","表示例":"Preview","表現を自分で調整":"Customize wording","記録を残すボタン":"Save-entry button","編集ボタン":"Edit button","削除ボタン":"Delete button","本文の見出し":"Text heading","空欄なら選んだ表現を使います。":"Leave blank to use the selected wording.","表現を初期設定に戻す":"Reset wording settings","日記":"Diary","今日のできごと":"Today’s events","日記をのこす":"Save my diary","かきなおす":"Change it","けす":"Erase","おもいで":"Memories","ことばのせってい":"Word settings","かく":"Write","やめる":"Cancel","かきなおして のこす":"Save my changes","もういちど おすと けせます":"Tap again to erase","のこしました":"Saved","かきなおしました":"Changed","けしました":"Erased","日記をかく":"Write my diary","保存する":"Save","修正する":"Revise","保存・取り込み":"Save / import","使い方の設定":"App settings","記録を保存する":"Save this entry","内容を直す":"Change the text","記録を消す":"Delete this entry","内容を保存する":"Save the text","記録を追加する":"Add entry","記録一覧":"All entries","下書きの例":"Example draft","できごとや、気づいたことを書いてみよう。":"Write about what happened or what you noticed.","作業や気づいたことを記入してください。":"Describe the work or what you noticed."},"zh":{"表現の設定":"用语设置","年代・読みやすさ":"年龄与易读程度","小学生向け":"小学生","中高生向け":"中学生","一般向け":"通用","シニア向け":"长者","仕事・用途":"工作或用途","形式に合わせる":"跟随日志格式","日記・学校生活":"日记／学校生活","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"仅更改本设备的显示用语。不会更改记录或其他成员的设置。","表示例":"预览","表現を自分で調整":"自定义用语","記録を残すボタン":"保存记录按钮","編集ボタン":"编辑按钮","削除ボタン":"删除按钮","本文の見出し":"正文标题","空欄なら選んだ表現を使います。":"留空时使用所选用语。","表現を初期設定に戻す":"重置用语设置","日記":"日记","今日のできごと":"今天发生的事","日記をのこす":"记下日记","かきなおす":"改一改","けす":"擦掉","おもいで":"回忆","ことばのせってい":"用语设置","かく":"写一写","やめる":"取消","かきなおして のこす":"改好并保存","もういちど おすと けせます":"再按一次就擦掉","のこしました":"记下啦","かきなおしました":"改好啦","けしました":"擦掉啦","日記をかく":"写日记","保存する":"保存","修正する":"修改","保存・取り込み":"保存／导入","使い方の設定":"应用设置","記録を保存する":"保存这条记录","内容を直す":"修改内容","記録を消す":"删除这条记录","内容を保存する":"保存内容","記録を追加する":"添加记录","記録一覧":"全部记录","下書きの例":"草稿示例","できごとや、気づいたことを書いてみよう。":"写写发生的事或你的发现吧。","作業や気づいたことを記入してください。":"请填写工作内容或发现。"},"ko":{"表現の設定":"표현 설정","年代・読みやすさ":"연령·가독성","小学生向け":"초등학생","中高生向け":"중고등학생","一般向け":"일반","シニア向け":"시니어","仕事・用途":"업무·용도","形式に合わせる":"일지 형식에 맞춤","日記・学校生活":"일기·학교생활","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"이 기기의 표시 표현만 바꿉니다. 기록과 다른 사람의 설정은 바뀌지 않습니다.","表示例":"미리 보기","表現を自分で調整":"표현 직접 설정","記録を残すボタン":"기록 저장 버튼","編集ボタン":"수정 버튼","削除ボタン":"삭제 버튼","本文の見出し":"본문 제목","空欄なら選んだ表現を使います。":"비워 두면 선택한 표현을 사용합니다.","表現を初期設定に戻す":"표현 설정 초기화","日記":"일기","今日のできごと":"오늘 있었던 일","日記をのこす":"일기 남기기","かきなおす":"고쳐 쓰기","けす":"지우기","おもいで":"추억","ことばのせってい":"말 설정","かく":"쓰기","やめる":"그만두기","かきなおして のこす":"고쳐서 저장","もういちど おすと けせます":"한 번 더 누르면 지워져요","のこしました":"남겼어요","かきなおしました":"고쳤어요","けしました":"지웠어요","日記をかく":"일기 쓰기","保存する":"저장","修正する":"수정","保存・取り込み":"저장·가져오기","使い方の設定":"앱 설정","記録を保存する":"이 기록 저장","内容を直す":"내용 고치기","記録を消す":"이 기록 삭제","内容を保存する":"내용 저장","記録を追加する":"기록 추가","記録一覧":"전체 기록","下書きの例":"초안 예시","できごとや、気づいたことを書いてみよう。":"오늘 있었던 일이나 발견한 것을 써 보세요.","作業や気づいたことを記入してください。":"작업 내용이나 발견한 것을 적어 주세요."},"vi":{"表現の設定":"Cài đặt cách diễn đạt","年代・読みやすさ":"Độ tuổi và dễ đọc","小学生向け":"Học sinh tiểu học","中高生向け":"Thanh thiếu niên","一般向け":"Thông thường","シニア向け":"Người lớn tuổi","仕事・用途":"Công việc / mục đích","形式に合わせる":"Theo mẫu nhật ký","日記・学校生活":"Nhật ký / trường học","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Chỉ đổi cách diễn đạt trên thiết bị này. Bản ghi và cài đặt của người khác không đổi.","表示例":"Xem trước","表現を自分で調整":"Tùy chỉnh cách diễn đạt","記録を残すボタン":"Nút lưu bản ghi","編集ボタン":"Nút sửa","削除ボタン":"Nút xóa","本文の見出し":"Tiêu đề nội dung","空欄なら選んだ表現を使います。":"Để trống để dùng cách diễn đạt đã chọn.","表現を初期設定に戻す":"Đặt lại cách diễn đạt","日記":"Nhật ký","今日のできごと":"Chuyện hôm nay","日記をのこす":"Lưu nhật ký của em","かきなおす":"Sửa lại","けす":"Xóa đi","おもいで":"Kỷ niệm","ことばのせってい":"Cài đặt từ ngữ","かく":"Viết","やめる":"Thôi","かきなおして のこす":"Sửa và lưu","もういちど おすと けせます":"Nhấn lần nữa để xóa","のこしました":"Đã lưu","かきなおしました":"Đã sửa","けしました":"Đã xóa","日記をかく":"Viết nhật ký","保存する":"Lưu","修正する":"Chỉnh sửa","保存・取り込み":"Lưu / nhập","使い方の設定":"Cài đặt ứng dụng","記録を保存する":"Lưu bản ghi này","内容を直す":"Sửa nội dung","記録を消す":"Xóa bản ghi này","内容を保存する":"Lưu nội dung","記録を追加する":"Thêm bản ghi","記録一覧":"Tất cả bản ghi","下書きの例":"Bản nháp mẫu","できごとや、気づいたことを書いてみよう。":"Viết về việc đã xảy ra hoặc điều em nhận thấy.","作業や気づいたことを記入してください。":"Ghi công việc hoặc điều bạn nhận thấy."},"fil":{"表現の設定":"Mga setting ng pananalita","年代・読みやすさ":"Edad at kadalian ng pagbasa","小学生向け":"Elementarya","中高生向け":"Mga tinedyer","一般向け":"Pangkalahatan","シニア向け":"Nakatatanda","仕事・用途":"Trabaho / layunin","形式に合わせる":"Ayon sa format ng tala","日記・学校生活":"Talaarawan / paaralan","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Pananalita lang sa device na ito ang babaguhin. Hindi maaapektuhan ang mga tala at setting ng iba.","表示例":"Preview","表現を自分で調整":"Sariling pananalita","記録を残すボタン":"Button sa pag-save ng tala","編集ボタン":"Button sa pag-edit","削除ボタン":"Button sa pagbura","本文の見出し":"Pamagat ng nilalaman","空欄なら選んだ表現を使います。":"Iwang blangko para gamitin ang napiling pananalita.","表現を初期設定に戻す":"I-reset ang pananalita","日記":"Talaarawan","今日のできごと":"Mga nangyari ngayon","日記をのこす":"I-save ang aking talaarawan","かきなおす":"Baguhin","けす":"Burahin","おもいで":"Mga alaala","ことばのせってい":"Mga salita","かく":"Magsulat","やめる":"Huwag na","かきなおして のこす":"I-save ang pagbabago","もういちど おすと けせます":"Pindutin ulit para burahin","のこしました":"Na-save","かきなおしました":"Nabago","けしました":"Nabura","日記をかく":"Isulat ang talaarawan","保存する":"I-save","修正する":"Baguhin","保存・取り込み":"I-save / i-import","使い方の設定":"Mga setting ng app","記録を保存する":"I-save ang talang ito","内容を直す":"Baguhin ang nilalaman","記録を消す":"Burahin ang talang ito","内容を保存する":"I-save ang nilalaman","記録を追加する":"Magdagdag ng tala","記録一覧":"Lahat ng tala","下書きの例":"Halimbawang draft","できごとや、気づいたことを書いてみよう。":"Isulat ang nangyari o ang napansin mo.","作業や気づいたことを記入してください。":"Ilarawan ang trabaho o ang napansin mo."},"pt":{"表現の設定":"Configurações de linguagem","年代・読みやすさ":"Idade e facilidade de leitura","小学生向け":"Ensino fundamental","中高生向け":"Adolescentes","一般向け":"Geral","シニア向け":"Pessoas idosas","仕事・用途":"Trabalho / finalidade","形式に合わせる":"Conforme o formato","日記・学校生活":"Diário / vida escolar","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Altera apenas a linguagem neste dispositivo. Os registros e as configurações dos outros não mudam.","表示例":"Prévia","表現を自分で調整":"Personalizar linguagem","記録を残すボタン":"Botão para salvar registro","編集ボタン":"Botão de edição","削除ボタン":"Botão de exclusão","本文の見出し":"Título do texto","空欄なら選んだ表現を使います。":"Deixe em branco para usar a linguagem selecionada.","表現を初期設定に戻す":"Redefinir linguagem","日記":"Diário","今日のできごと":"Acontecimentos de hoje","日記をのこす":"Salvar meu diário","かきなおす":"Mudar","けす":"Apagar","おもいで":"Lembranças","ことばのせってい":"Configurar palavras","かく":"Escrever","やめる":"Cancelar","かきなおして のこす":"Salvar minhas mudanças","もういちど おすと けせます":"Toque de novo para apagar","のこしました":"Salvo","かきなおしました":"Alterado","けしました":"Apagado","日記をかく":"Escrever meu diário","保存する":"Salvar","修正する":"Revisar","保存・取り込み":"Salvar / importar","使い方の設定":"Configurações do app","記録を保存する":"Salvar este registro","内容を直す":"Alterar o texto","記録を消す":"Excluir este registro","内容を保存する":"Salvar o texto","記録を追加する":"Adicionar registro","記録一覧":"Todos os registros","下書きの例":"Rascunho de exemplo","できごとや、気づいたことを書いてみよう。":"Escreva o que aconteceu ou o que você percebeu.","作業や気づいたことを記入してください。":"Descreva o trabalho ou o que você percebeu."},"ne":{"表現の設定":"शब्दावली सेटिङ","年代・読みやすさ":"उमेर र पठनीयता","小学生向け":"प्राथमिक विद्यार्थी","中高生向け":"किशोरकिशोरी","一般向け":"सामान्य","シニア向け":"ज्येष्ठ नागरिक","仕事・用途":"काम / उद्देश्य","形式に合わせる":"दैनिकीको ढाँचाअनुसार","日記・学校生活":"डायरी / विद्यालय जीवन","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"यस उपकरणको शब्दावली मात्र बदलिन्छ। अभिलेख र अरूका सेटिङ बदलिँदैनन्।","表示例":"पूर्वावलोकन","表現を自分で調整":"आफ्नै शब्द प्रयोग","記録を残すボタン":"अभिलेख सुरक्षित गर्ने बटन","編集ボタン":"सम्पादन बटन","削除ボタン":"मेटाउने बटन","本文の見出し":"पाठको शीर्षक","空欄なら選んだ表現を使います。":"खाली राखेमा छानिएको शब्दावली प्रयोग हुन्छ।","表現を初期設定に戻す":"शब्दावली पूर्वनिर्धारित गर्ने","日記":"डायरी","今日のできごと":"आजका घटना","日記をのこす":"मेरो डायरी राख्ने","かきなおす":"सच्याउने","けす":"मेटाउने","おもいで":"सम्झना","ことばのせってい":"शब्द सेटिङ","かく":"लेख्ने","やめる":"छोड्ने","かきなおして のこす":"सच्याएर राख्ने","もういちど おすと けせます":"मेटाउन फेरि थिच","のこしました":"राखियो","かきなおしました":"सच्याइयो","けしました":"मेटियो","日記をかく":"मेरो डायरी लेख्ने","保存する":"सुरक्षित गर्ने","修正する":"सुधार गर्ने","保存・取り込み":"सुरक्षित / आयात","使い方の設定":"एप सेटिङ","記録を保存する":"यो अभिलेख सुरक्षित गर्ने","内容を直す":"पाठ सच्याउने","記録を消す":"यो अभिलेख मेटाउने","内容を保存する":"पाठ सुरक्षित गर्ने","記録を追加する":"अभिलेख थप्ने","記録一覧":"सबै अभिलेख","下書きの例":"मस्यौदाको उदाहरण","できごとや、気づいたことを書いてみよう。":"के भयो वा के देख्यौ लेख।","作業や気づいたことを記入してください。":"काम वा देखेका कुरा लेख्नुहोस्।"},"es":{"表現の設定":"Ajustes de lenguaje","年代・読みやすさ":"Edad y facilidad de lectura","小学生向け":"Primaria","中高生向け":"Adolescentes","一般向け":"General","シニア向け":"Personas mayores","仕事・用途":"Trabajo / finalidad","形式に合わせる":"Según el formato","日記・学校生活":"Diario / vida escolar","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Solo cambia el lenguaje de este dispositivo. Los registros y ajustes de otras personas no cambian.","表示例":"Vista previa","表現を自分で調整":"Personalizar lenguaje","記録を残すボタン":"Botón para guardar registro","編集ボタン":"Botón de edición","削除ボタン":"Botón de eliminación","本文の見出し":"Título del texto","空欄なら選んだ表現を使います。":"Déjalo vacío para usar el lenguaje elegido.","表現を初期設定に戻す":"Restablecer lenguaje","日記":"Diario","今日のできごと":"Lo que pasó hoy","日記をのこす":"Guardar mi diario","かきなおす":"Cambiar","けす":"Borrar","おもいで":"Recuerdos","ことばのせってい":"Ajustes de palabras","かく":"Escribir","やめる":"Cancelar","かきなおして のこす":"Guardar mis cambios","もういちど おすと けせます":"Toca otra vez para borrar","のこしました":"Guardado","かきなおしました":"Cambiado","けしました":"Borrado","日記をかく":"Escribir mi diario","保存する":"Guardar","修正する":"Revisar","保存・取り込み":"Guardar / importar","使い方の設定":"Ajustes de la app","記録を保存する":"Guardar este registro","内容を直す":"Cambiar el texto","記録を消す":"Eliminar este registro","内容を保存する":"Guardar el texto","記録を追加する":"Añadir registro","記録一覧":"Todos los registros","下書きの例":"Borrador de ejemplo","できごとや、気づいたことを書いてみよう。":"Escribe lo que pasó o lo que observaste.","作業や気づいたことを記入してください。":"Describe el trabajo o lo que observaste."},"fr":{"表現の設定":"Réglages du vocabulaire","年代・読みやすさ":"Âge et lisibilité","小学生向け":"École primaire","中高生向け":"Adolescents","一般向け":"Général","シニア向け":"Seniors","仕事・用途":"Travail / usage","形式に合わせる":"Selon le format","日記・学校生活":"Journal / vie scolaire","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Change seulement le vocabulaire sur cet appareil. Les entrées et les réglages des autres restent inchangés.","表示例":"Aperçu","表現を自分で調整":"Personnaliser le vocabulaire","記録を残すボタン":"Bouton d’enregistrement","編集ボタン":"Bouton de modification","削除ボタン":"Bouton de suppression","本文の見出し":"Titre du texte","空欄なら選んだ表現を使います。":"Laissez vide pour utiliser le vocabulaire choisi.","表現を初期設定に戻す":"Réinitialiser le vocabulaire","日記":"Journal","今日のできごと":"Les événements du jour","日記をのこす":"Garder mon journal","かきなおす":"Changer","けす":"Effacer","おもいで":"Souvenirs","ことばのせってい":"Réglage des mots","かく":"Écrire","やめる":"Annuler","かきなおして のこす":"Garder mes changements","もういちど おすと けせます":"Appuie encore pour effacer","のこしました":"Enregistré","かきなおしました":"Changé","けしました":"Effacé","日記をかく":"Écrire mon journal","保存する":"Enregistrer","修正する":"Réviser","保存・取り込み":"Enregistrer / importer","使い方の設定":"Réglages de l’app","記録を保存する":"Enregistrer cette entrée","内容を直す":"Modifier le texte","記録を消す":"Supprimer cette entrée","内容を保存する":"Enregistrer le texte","記録を追加する":"Ajouter une entrée","記録一覧":"Toutes les entrées","下書きの例":"Exemple de brouillon","できごとや、気づいたことを書いてみよう。":"Raconte ce qui s’est passé ou ce que tu as remarqué.","作業や気づいたことを記入してください。":"Décrivez le travail ou vos observations."},"de":{"表現の設定":"Spracheinstellungen","年代・読みやすさ":"Alter und Lesbarkeit","小学生向け":"Grundschule","中高生向け":"Jugendliche","一般向け":"Allgemein","シニア向け":"Senioren","仕事・用途":"Arbeit / Zweck","形式に合わせる":"Dem Format folgen","日記・学校生活":"Tagebuch / Schule","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Ändert nur die Wortwahl auf diesem Gerät. Einträge und Einstellungen anderer bleiben gleich.","表示例":"Vorschau","表現を自分で調整":"Wortwahl anpassen","記録を残すボタン":"Schaltfläche zum Speichern","編集ボタン":"Bearbeiten-Schaltfläche","削除ボタン":"Löschen-Schaltfläche","本文の見出し":"Textüberschrift","空欄なら選んだ表現を使います。":"Leer lassen, um die gewählte Wortwahl zu nutzen.","表現を初期設定に戻す":"Wortwahl zurücksetzen","日記":"Tagebuch","今日のできごと":"Was heute passiert ist","日記をのこす":"Mein Tagebuch speichern","かきなおす":"Ändern","けす":"Wegmachen","おもいで":"Erinnerungen","ことばのせってい":"Wörter einstellen","かく":"Schreiben","やめる":"Abbrechen","かきなおして のこす":"Meine Änderungen speichern","もういちど おすと けせます":"Zum Wegmachen noch einmal tippen","のこしました":"Gespeichert","かきなおしました":"Geändert","けしました":"Entfernt","日記をかく":"Mein Tagebuch schreiben","保存する":"Speichern","修正する":"Überarbeiten","保存・取り込み":"Speichern / importieren","使い方の設定":"App-Einstellungen","記録を保存する":"Diesen Eintrag speichern","内容を直す":"Text ändern","記録を消す":"Diesen Eintrag löschen","内容を保存する":"Text speichern","記録を追加する":"Eintrag hinzufügen","記録一覧":"Alle Einträge","下書きの例":"Beispielentwurf","できごとや、気づいたことを書いてみよう。":"Schreibe auf, was passiert ist oder was dir aufgefallen ist.","作業や気づいたことを記入してください。":"Beschreiben Sie die Arbeit oder Ihre Beobachtungen."},"ar":{"表現の設定":"إعدادات التعبير","年代・読みやすさ":"العمر وسهولة القراءة","小学生向け":"المرحلة الابتدائية","中高生向け":"المراهقون","一般向け":"عام","シニア向け":"كبار السن","仕事・用途":"العمل / الغرض","形式に合わせる":"حسب تنسيق السجل","日記・学校生活":"يوميات / حياة مدرسية","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"يغير التعبير على هذا الجهاز فقط. لا تتغير السجلات أو إعدادات الآخرين.","表示例":"معاينة","表現を自分で調整":"تخصيص التعبير","記録を残すボタン":"زر حفظ السجل","編集ボタン":"زر التعديل","削除ボタン":"زر الحذف","本文の見出し":"عنوان النص","空欄なら選んだ表現を使います。":"اتركه فارغًا لاستخدام التعبير المختار.","表現を初期設定に戻す":"إعادة ضبط التعبير","日記":"يوميات","今日のできごと":"أحداث اليوم","日記をのこす":"احفظ يومياتي","かきなおす":"غيّر","けす":"امسح","おもいで":"ذكريات","ことばのせってい":"إعداد الكلمات","かく":"اكتب","やめる":"إلغاء","かきなおして のこす":"احفظ تعديلاتي","もういちど おすと けせます":"اضغط مرة أخرى للمسح","のこしました":"تم الحفظ","かきなおしました":"تم التغيير","けしました":"تم المسح","日記をかく":"اكتب يومياتي","保存する":"حفظ","修正する":"مراجعة","保存・取り込み":"حفظ / استيراد","使い方の設定":"إعدادات التطبيق","記録を保存する":"حفظ هذا السجل","内容を直す":"تعديل النص","記録を消す":"حذف هذا السجل","内容を保存する":"حفظ النص","記録を追加する":"إضافة سجل","記録一覧":"كل السجلات","下書きの例":"مسودة نموذجية","できごとや、気づいたことを書いてみよう。":"اكتب ما حدث أو ما لاحظته.","作業や気づいたことを記入してください。":"اكتب عن العمل أو ما لاحظته."},"id":{"表現の設定":"Pengaturan ungkapan","年代・読みやすさ":"Usia dan keterbacaan","小学生向け":"Sekolah dasar","中高生向け":"Remaja","一般向け":"Umum","シニア向け":"Lansia","仕事・用途":"Pekerjaan / tujuan","形式に合わせる":"Sesuai format catatan","日記・学校生活":"Buku harian / sekolah","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Hanya mengubah ungkapan di perangkat ini. Catatan dan pengaturan orang lain tidak berubah.","表示例":"Pratinjau","表現を自分で調整":"Sesuaikan ungkapan","記録を残すボタン":"Tombol simpan catatan","編集ボタン":"Tombol ubah","削除ボタン":"Tombol hapus","本文の見出し":"Judul teks","空欄なら選んだ表現を使います。":"Kosongkan untuk memakai ungkapan pilihan.","表現を初期設定に戻す":"Atur ulang ungkapan","日記":"Buku harian","今日のできごと":"Kejadian hari ini","日記をのこす":"Simpan buku harianku","かきなおす":"Ubah","けす":"Hapus","おもいで":"Kenangan","ことばのせってい":"Atur kata","かく":"Tulis","やめる":"Batal","かきなおして のこす":"Simpan perubahanku","もういちど おすと けせます":"Ketuk lagi untuk menghapus","のこしました":"Tersimpan","かきなおしました":"Diubah","けしました":"Dihapus","日記をかく":"Tulis buku harianku","保存する":"Simpan","修正する":"Revisi","保存・取り込み":"Simpan / impor","使い方の設定":"Pengaturan aplikasi","記録を保存する":"Simpan catatan ini","内容を直す":"Ubah isi","記録を消す":"Hapus catatan ini","内容を保存する":"Simpan isi","記録を追加する":"Tambah catatan","記録一覧":"Semua catatan","下書きの例":"Contoh draf","できごとや、気づいたことを書いてみよう。":"Tulis kejadian atau hal yang kamu perhatikan.","作業や気づいたことを記入してください。":"Tulis pekerjaan atau hal yang Anda perhatikan."},"ru":{"表現の設定":"Настройки формулировок","年代・読みやすさ":"Возраст и удобство чтения","小学生向け":"Начальная школа","中高生向け":"Подростки","一般向け":"Общий","シニア向け":"Старший возраст","仕事・用途":"Работа / цель","形式に合わせる":"По формату журнала","日記・学校生活":"Дневник / школа","この端末の表示だけを変えます。記録やほかの人の設定は変わりません。":"Меняет только формулировки на этом устройстве. Записи и настройки других не меняются.","表示例":"Предпросмотр","表現を自分で調整":"Свои формулировки","記録を残すボタン":"Кнопка сохранения записи","編集ボタン":"Кнопка редактирования","削除ボタン":"Кнопка удаления","本文の見出し":"Заголовок текста","空欄なら選んだ表現を使います。":"Оставьте пустым для выбранных формулировок.","表現を初期設定に戻す":"Сбросить формулировки","日記":"Дневник","今日のできごと":"События дня","日記をのこす":"Сохранить мой дневник","かきなおす":"Изменить","けす":"Стереть","おもいで":"Воспоминания","ことばのせってい":"Настройки слов","かく":"Написать","やめる":"Отмена","かきなおして のこす":"Сохранить мои изменения","もういちど おすと けせます":"Нажми ещё раз, чтобы стереть","のこしました":"Сохранено","かきなおしました":"Изменено","けしました":"Стёрто","日記をかく":"Написать в дневнике","保存する":"Сохранить","修正する":"Исправить","保存・取り込み":"Сохранить / импорт","使い方の設定":"Настройки приложения","記録を保存する":"Сохранить эту запись","内容を直す":"Изменить текст","記録を消す":"Удалить эту запись","内容を保存する":"Сохранить текст","記録を追加する":"Добавить запись","記録一覧":"Все записи","下書きの例":"Пример черновика","できごとや、気づいたことを書いてみよう。":"Напиши, что произошло или что ты заметил.","作業や気づいたことを記入してください。":"Опишите работу или ваши наблюдения."}};
+for(const [lang,words]of Object.entries(WORDING_TEXT))Object.assign(EXTRA[lang],words);
+</script>
+<script>
+let L=null;
+if(!window.webxdc){window.webxdc={selfAddr:'me@local',selfName:'テスト',mock:true,sendUpdateMaxSize:128000,sendUpdate:u=>setTimeout(()=>L&&L({payload:u.payload}),0),setUpdateListener:cb=>{L=cb;return Promise.resolve()}}}
+const W=window.webxdc,$=s=>document.querySelector(s),MAX=Number(W.sendUpdateMaxSize)||128000;
+let sendTail=Promise.resolve(),lastSent=0,busy=false,loadingPhotos=0;
+function send(u){const job=sendTail.then(async()=>{if(new TextEncoder().encode(JSON.stringify(u)).length>MAX)throw Error('update too large');const delay=Math.max(0,Math.max(0,Number(W.sendUpdateInterval??W.sendUpdateMaxInterval??10000)||0)-(Date.now()-lastSent));if(delay)await new Promise(r=>setTimeout(r,delay));await W.sendUpdate(u,'');lastSent=Date.now()});sendTail=job.catch(()=>{});return job}
+const disabledBefore=new Map(),busyLabels=new Map();
+function lock(on){busy=on;if(on){for(const id of ['#post','#e-save','#impgo']){const e=$(id);busyLabels.set(e,e.textContent);e.textContent=tr('送信中…')}document.querySelectorAll('button,input,textarea,select').forEach(e=>{disabledBefore.set(e,e.disabled);e.disabled=true})}else{for(const [e,text]of busyLabels)e.textContent=text;busyLabels.clear();for(const [e,disabled] of disabledBefore)e.disabled=disabled;disabledBefore.clear();syncForm();$('#e-add').disabled=ed.fields.length>=6;$('#post').disabled=loadingPhotos>0}}
+const minFor=f=>f.k==='temp'||/温/.test(f.l)?-273.15:0;
+const WX={sun:['☀️','晴れ'],cloud:['☁️','くもり'],rain:['🌧️','雨'],snow:['❄️','雪']};
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const fmt=s=>{const[y,m,d]=s.split('-').map(Number),dt=new Date(y,m-1,d);let w='日月火水木金土'[dt.getDay()];if(LANG!=='ja'){try{w=new Intl.DateTimeFormat(LC[LANG],{weekday:'short'}).format(dt)}catch(e){}}return[m+'/'+d,w]};
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+/* 多言語（日本語の文言をキーにして、同じ順番の配列で翻訳を持つ） */
+const K=['書く','一覧','データ','設定','記録','日付','天気','晴れ','くもり','雨','雪','人数','人','作業内容','写真','撮影','選ぶ','投稿する','訂正を保存する','訂正中：上書き保存します','やめる','まだ日誌がありません','日誌を書く','編集','削除','もう一度押して削除','訂正あり','受信中…','投稿しました','訂正を保存しました','削除しました','内容か写真を入れてください','写真は3枚までです','写真を読み込めません','送信できません。もう一度押してください','写真を受信中です。少し待ってください','該当する記録はありません','要対応・未確認だけ','未確認：','すべてOKにする','今','場所','時刻','結果','異常なし','要注意','要対応','現場日誌','農業日誌','圃場','作業','作業時間','収穫量','耕起','定植','防除','施肥','収穫','出荷','その他','時間','はい','なし','作業内容・様子'];
+const D={
+en:['Write','Log','Data','Settings','Entries','Date','Weather','Sunny','Cloudy','Rain','Snow','Workers','ppl','Work done','Photos','Camera','Gallery','Post','Save changes','Editing: will overwrite','Cancel','No entries yet','Write an entry','Edit','Delete','Tap again to delete','Edited','Receiving…','Posted','Changes saved','Deleted','Add text or a photo','Up to 3 photos','Photo failed to load','Failed to send. Try again','Photos still arriving. Please wait','No matching entries','Action needed / unchecked only','Unchecked: ','Mark all OK','Now','Place','Time','Result','No issues','Caution','Action needed','Site log','Farm log','Field','Task','Work hours','Harvest qty','Plowing','Planting','Pest control','Fertilizing','Harvesting','Shipping','Other','hrs','Yes','No','Work & notes'],
+zh:['写日志','列表','数据','设置','记录','日期','天气','晴','多云','雨','雪','人数','人','作业内容','照片','拍照','选择','提交','保存修改','修改中：将覆盖原记录','取消','还没有日志','写日志','编辑','删除','再按一次删除','已修改','接收中…','已提交','已保存修改','已删除','请填写内容或添加照片','照片最多3张','无法读取照片','发送失败，请重试','照片接收中，请稍候','没有符合的记录','仅看需处理/未确认','未确认：','全部OK','现在','地点','时间','结果','无异常','需注意','需处理','现场日志','农业日志','田块','作业','作业时间','收获量','翻耕','移栽','病虫害防治','施肥','收获','出货','其他','小时','是','无','作业内容・情况'],
+ko:['쓰기','목록','데이터','설정','기록','날짜','날씨','맑음','흐림','비','눈','인원','명','작업 내용','사진','촬영','선택','등록','수정 저장','수정 중: 덮어씁니다','취소','아직 일지가 없습니다','일지 쓰기','수정','삭제','한 번 더 누르면 삭제','수정됨','수신 중…','등록했습니다','수정을 저장했습니다','삭제했습니다','내용이나 사진을 넣어 주세요','사진은 3장까지입니다','사진을 불러올 수 없습니다','전송하지 못했습니다. 다시 눌러 주세요','사진 수신 중입니다. 잠시 기다려 주세요','해당하는 기록이 없습니다','조치 필요·미확인만','미확인: ','모두 OK','지금','장소','시각','결과','이상 없음','주의','조치 필요','현장 일지','농업 일지','밭','작업','작업 시간','수확량','경운','정식','방제','시비','수확','출하','기타','시간','예','아니오','작업 내용·상태'],
+vi:['Viết','Danh sách','Dữ liệu','Cài đặt','Mục','Ngày','Thời tiết','Nắng','Nhiều mây','Mưa','Tuyết','Số người','người','Nội dung công việc','Ảnh','Chụp','Chọn','Đăng','Lưu chỉnh sửa','Đang sửa: sẽ ghi đè','Hủy','Chưa có nhật ký','Viết nhật ký','Sửa','Xóa','Nhấn lại để xóa','Đã sửa','Đang nhận…','Đã đăng','Đã lưu chỉnh sửa','Đã xóa','Hãy nhập nội dung hoặc ảnh','Tối đa 3 ảnh','Không đọc được ảnh','Gửi không được. Hãy thử lại','Ảnh đang được nhận. Vui lòng chờ','Không có mục phù hợp','Chỉ mục cần xử lý/chưa kiểm tra','Chưa kiểm tra: ','Tất cả OK','Bây giờ','Địa điểm','Giờ','Kết quả','Bình thường','Lưu ý','Cần xử lý','Nhật ký công trường','Nhật ký nông nghiệp','Ruộng','Công việc','Giờ làm','Sản lượng','Cày xới','Trồng','Phòng trừ sâu bệnh','Bón phân','Thu hoạch','Xuất hàng','Khác','giờ','Có','Không','Công việc và ghi chú'],
+fil:['Isulat','Listahan','Datos','Setting','Tala','Petsa','Panahon','Maaraw','Maulap','Ulan','Niyebe','Bilang ng tao','tao','Ginawang trabaho','Larawan','Kumuha','Pumili','I-post','I-save ang pagbabago','Ine-edit: papalitan ang dati','Kanselahin','Wala pang talaarawan','Magsulat ng tala','I-edit','Burahin','Pindutin ulit para burahin','Na-edit','Tinatanggap…','Na-post','Na-save ang pagbabago','Nabura','Maglagay ng nilalaman o larawan','Hanggang 3 larawan lang','Hindi mabuksan ang larawan','Hindi naipadala. Subukan ulit','Dumarating pa ang larawan. Maghintay sandali','Walang katugmang tala','Kailangang aksyunan/hindi pa nasuri lang','Hindi pa nasuri: ','Lahat OK','Ngayon','Lugar','Oras','Resulta','Walang problema','Mag-ingat','Kailangang aksyunan','Talaarawan ng site','Talaarawan sa bukid','Bukid','Gawain','Oras ng trabaho','Dami ng ani','Pag-aararo','Pagtatanim','Pagkontrol ng peste','Pagpapataba','Pag-aani','Pagpapadala','Iba pa','oras','Oo','Wala','Gawain at mga tala'],
+pt:['Escrever','Lista','Dados','Ajustes','Registros','Data','Clima','Sol','Nublado','Chuva','Neve','Nº de pessoas','pessoas','Serviço realizado','Fotos','Câmera','Escolher','Publicar','Salvar alterações','Editando: vai substituir','Cancelar','Ainda não há diário','Escrever diário','Editar','Excluir','Toque de novo para excluir','Editado','Recebendo…','Publicado','Alterações salvas','Excluído','Escreva algo ou adicione foto','Máximo de 3 fotos','Não foi possível abrir a foto','Falha no envio. Tente de novo','Fotos chegando. Aguarde um pouco','Nenhum registro encontrado','Só pendentes/não verificados','Não verificado: ','Tudo OK','Agora','Local','Hora','Resultado','Sem problemas','Atenção','Requer ação','Diário da obra','Diário agrícola','Talhão','Tarefa','Horas de trabalho','Qtd. colhida','Aração','Plantio','Controle de pragas','Adubação','Colheita','Expedição','Outro','h','Sim','Não','Serviço e observações'],
+ne:['लेख्नुहोस्','सूची','डेटा','सेटिङ','रेकर्ड','मिति','मौसम','घाम','बादल','वर्षा','हिउँ','कामदार संख्या','जना','कामको विवरण','फोटो','खिच्नुहोस्','छान्नुहोस्','पोस्ट गर्नुहोस्','परिवर्तन सुरक्षित गर्नुहोस्','सम्पादन हुँदैछ: पुरानो बदलिनेछ','रद्द गर्नुहोस्','अहिलेसम्म डायरी छैन','डायरी लेख्नुहोस्','सम्पादन','मेट्नुहोस्','मेट्न फेरि थिच्नुहोस्','सम्पादित','प्राप्त हुँदैछ…','पोस्ट भयो','परिवर्तन सुरक्षित भयो','मेटियो','विवरण वा फोटो राख्नुहोस्','फोटो ३ वटासम्म मात्र','फोटो खोल्न सकिएन','पठाउन सकिएन। फेरि प्रयास गर्नुहोस्','फोटो आउँदैछ। केही पर्खनुहोस्','मिल्ने रेकर्ड छैन','कारबाही/जाँच बाँकी मात्र','जाँच बाँकी: ','सबै ठिक','अहिले','ठाउँ','समय','नतिजा','समस्या छैन','सावधानी','कारबाही आवश्यक','साइट डायरी','कृषि डायरी','खेत','काम','काम गरेको समय','उब्जनी मात्रा','जोताइ','रोपाइँ','कीरा नियन्त्रण','मल हाल्ने','कटनी','ढुवानी','अन्य','घण्टा','हो','छैन','कामको विवरण र टिपोट'],
+es:['Escribir','Lista','Datos','Ajustes','Registros','Fecha','Clima','Soleado','Nublado','Lluvia','Nieve','N.º de personas','pers.','Trabajo realizado','Fotos','Cámara','Elegir','Publicar','Guardar cambios','Editando: se sobrescribirá','Cancelar','Aún no hay registros','Escribir diario','Editar','Eliminar','Toca de nuevo para eliminar','Editado','Recibiendo…','Publicado','Cambios guardados','Eliminado','Añade texto o una foto','Máximo 3 fotos','No se pudo cargar la foto','No se pudo enviar. Inténtalo de nuevo','Las fotos están llegando. Espera un poco','No hay registros que coincidan','Solo pendientes/sin verificar','Sin verificar: ','Todo OK','Ahora','Lugar','Hora','Resultado','Sin problemas','Atención','Requiere acción','Diario de obra','Diario agrícola','Parcela','Tarea','Horas de trabajo','Cant. cosechada','Labrado','Siembra','Control de plagas','Abonado','Cosecha','Envío','Otro','h','Sí','No','Trabajo y notas'],
+fr:['Écrire','Liste','Données','Réglages','Entrées','Date','Météo','Ensoleillé','Nuageux','Pluie','Neige','Effectif','pers.','Travaux effectués','Photos','Photo','Choisir','Publier','Enregistrer les modifs','Modification : remplacera la saisie','Annuler','Aucune entrée pour le moment','Écrire une entrée','Modifier','Supprimer','Appuyez encore pour supprimer','Modifié','Réception…','Publié','Modifications enregistrées','Supprimé','Ajoutez du texte ou une photo','3 photos maximum','Photo illisible','Envoi impossible. Réessayez','Photos en cours de réception. Patientez','Aucune entrée correspondante','À traiter / non vérifiés seulement','Non vérifié : ','Tout OK','Maintenant','Lieu','Heure','Résultat','RAS','Attention','Action requise','Journal de chantier','Journal agricole','Parcelle','Tâche','Heures de travail','Qté récoltée','Labour','Plantation','Traitement','Fertilisation','Récolte','Expédition','Autre','h','Oui','Non','Travaux et remarques'],
+de:['Schreiben','Liste','Daten','Einstellungen','Einträge','Datum','Wetter','Sonnig','Bewölkt','Regen','Schnee','Personenzahl','Pers.','Ausgeführte Arbeiten','Fotos','Aufnehmen','Auswählen','Senden','Änderungen speichern','Bearbeitung: überschreibt den Eintrag','Abbrechen','Noch keine Einträge','Eintrag schreiben','Bearbeiten','Löschen','Zum Löschen erneut tippen','Bearbeitet','Wird empfangen…','Gesendet','Änderungen gespeichert','Gelöscht','Text oder Foto hinzufügen','Maximal 3 Fotos','Foto nicht ladbar','Senden fehlgeschlagen. Nochmal versuchen','Fotos kommen noch an. Bitte warten','Keine passenden Einträge','Nur offene/ungeprüfte','Ungeprüft: ','Alles OK','Jetzt','Ort','Uhrzeit','Ergebnis','In Ordnung','Achtung','Handlungsbedarf','Baustellenprotokoll','Landwirtschaftsprotokoll','Feld','Arbeit','Arbeitszeit','Erntemenge','Pflügen','Pflanzen','Pflanzenschutz','Düngen','Ernte','Versand','Sonstiges','Std.','Ja','Nein','Arbeiten und Notizen'],
+ar:['كتابة','القائمة','البيانات','الإعدادات','السجلات','التاريخ','الطقس','مشمس','غائم','مطر','ثلج','عدد العمال','شخص','العمل المنجز','الصور','تصوير','اختيار','نشر','حفظ التعديل','جارٍ التعديل: سيُستبدل السجل','إلغاء','لا توجد سجلات بعد','اكتب سجلًا','تعديل','حذف','اضغط مرة أخرى للحذف','معدَّل','جارٍ الاستلام…','تم النشر','تم حفظ التعديل','تم الحذف','أضف نصًا أو صورة','الحد الأقصى 3 صور','تعذّر فتح الصورة','تعذّر الإرسال. حاول مرة أخرى','الصور قيد الاستلام. انتظر قليلًا','لا توجد سجلات مطابقة','المطلوب إجراؤه/غير المفحوص فقط','غير مفحوص: ','الكل سليم','الآن','المكان','الوقت','النتيجة','لا مشكلة','تنبيه','يتطلب إجراء','سجل الموقع','سجل زراعي','الحقل','العمل','ساعات العمل','كمية الحصاد','الحراثة','الزراعة','مكافحة الآفات','التسميد','الحصاد','الشحن','أخرى','ساعة','نعم','لا','العمل والملاحظات'],
+id:['Tulis','Daftar','Data','Pengaturan','Catatan','Tanggal','Cuaca','Cerah','Berawan','Hujan','Salju','Jumlah orang','orang','Isi pekerjaan','Foto','Kamera','Pilih','Kirim','Simpan perubahan','Mengedit: akan menimpa catatan','Batal','Belum ada catatan','Tulis catatan','Ubah','Hapus','Ketuk lagi untuk menghapus','Diubah','Menerima…','Terkirim','Perubahan tersimpan','Terhapus','Isi teks atau tambahkan foto','Maksimal 3 foto','Foto tidak bisa dibuka','Gagal mengirim. Coba lagi','Foto sedang diterima. Mohon tunggu','Tidak ada catatan yang cocok','Hanya yang perlu tindakan/belum dicek','Belum dicek: ','Semua OK','Sekarang','Lokasi','Jam','Hasil','Normal','Waspada','Perlu tindakan','Catatan proyek','Catatan pertanian','Lahan','Pekerjaan','Jam kerja','Hasil panen','Membajak','Menanam','Pengendalian hama','Pemupukan','Panen','Pengiriman','Lainnya','jam','Ya','Tidak','Pekerjaan dan catatan'],
+ru:['Записать','Список','Данные','Настройки','Записи','Дата','Погода','Ясно','Облачно','Дождь','Снег','Кол-во людей','чел.','Выполненные работы','Фото','Снять','Выбрать','Отправить','Сохранить правку','Правка: запись будет заменена','Отмена','Записей пока нет','Написать запись','Изменить','Удалить','Нажмите ещё раз для удаления','Изменено','Получение…','Отправлено','Правка сохранена','Удалено','Добавьте текст или фото','Не более 3 фото','Не удалось открыть фото','Не удалось отправить. Повторите','Фото ещё загружаются. Подождите','Нет подходящих записей','Только требующие действий/непроверенные','Не проверено: ','Всё в порядке','Сейчас','Место','Время','Результат','Замечаний нет','Внимание','Требуется действие','Журнал объекта','Агрожурнал','Поле','Работа','Часы работы','Объём урожая','Вспашка','Посадка','Защита от вредителей','Удобрение','Уборка урожая','Отгрузка','Другое','ч','Да','Нет','Работы и заметки']
+};
+const LN=[['ja','日本語'],['en','English'],['zh','中文'],['ko','한국어'],['vi','Tiếng Việt'],['fil','Filipino'],['tl','Tagalog'],['pt','Português'],['ne','नेपाली'],['es','Español'],['fr','Français'],['de','Deutsch'],['ar','العربية'],['id','Bahasa Indonesia'],['ru','Русский']];
+const LC={ja:'ja',en:'en',zh:'zh-CN',ko:'ko',vi:'vi',fil:'fil',tl:'tl',pt:'pt-BR',ne:'ne',es:'es',fr:'fr',de:'de',ar:'ar',id:'id',ru:'ru'};
+const IDX=new Map(K.map((s,i)=>[s,i]));
+let LANG='ja';
+const baseTr=s=>{const lang=LANG==='tl'?'fil':LANG,a=D[lang],i=IDX.get(s);return EXTRA[lang]?.[s]||(a&&i!==undefined&&a[i]?a[i]:s)};
+const WORD_AGES={adult:'一般向け',child:'小学生向け',teen:'中高生向け',senior:'シニア向け'};
+const WORD_ROLES={auto:['形式に合わせる',''],site:['現場日誌','作業内容'],farm:['農業日誌','作業内容・様子'],pet:['飼育日誌','様子・メモ'],patrol:['点検巡回','所見・指摘事項'],watch:['観察記録','観察メモ'],diary:['日記・学校生活','今日のできごと']};
+const BODY_KEYS=['作業内容','作業内容・様子','様子・メモ','所見・指摘事項','観察メモ','今日のできごと'];
+function defaultWording(){return {age:'adult',role:'auto',custom:{}}}
+function readWording(){try{const p=JSON.parse(localStorage.getItem('genba-wording-v1')||'null'),w=defaultWording();if(!p||typeof p!=='object')return w;if(Object.prototype.hasOwnProperty.call(WORD_AGES,p.age))w.age=p.age;if(Object.prototype.hasOwnProperty.call(WORD_ROLES,p.role))w.role=p.role;for(const k of ['post','edit','delete','heading'])if(typeof p.custom?.[k]==='string')w.custom[k]=p.custom[k].trim().slice(0,32);return w}catch(e){return defaultWording()}}
+let wording=readWording();
+const AGE_WORDS={
+ child:{'書く':'かく','一覧':'おもいで','投稿する':'日記をのこす','編集':'かきなおす','削除':'けす','やめる':'やめる','訂正を保存する':'かきなおして のこす','もう一度押して削除':'もういちど おすと けせます','投稿しました':'のこしました','訂正を保存しました':'かきなおしました','削除しました':'けしました','日誌を書く':'日記をかく'},
+ teen:{'投稿する':'保存する','編集':'修正する','一覧':'記録一覧','データ':'保存・取り込み'},
+ senior:{'投稿する':'記録を保存する','編集':'内容を直す','削除':'記録を消す','訂正を保存する':'内容を保存する','一覧':'記録一覧','データ':'保存・取り込み','設定':'使い方の設定'}
+};
+function tr(s){
+ let key=s;
+ if(wording.role!=='auto'){
+   const role=WORD_ROLES[wording.role];
+   if(BODY_KEYS.includes(s))key=role[1];
+   if(s==='投稿する')key=wording.role==='diary'?'保存する':'記録を追加する';
+ }
+ if(s==='投稿する'&&tpl?.name==='日記')key='保存する';
+ if(AGE_WORDS[wording.age]?.[s])key=AGE_WORDS[wording.age][s];
+ if(wording.age==='child'&&s==='設定'&&LANG==='ja')return 'せってい';
+ const customKey=({'投稿する':'post','編集':'edit','削除':'delete'})[s]||(BODY_KEYS.includes(s)?'heading':null);
+ if(customKey&&wording.custom[customKey])return wording.custom[customKey];
+ return baseTr(key);
+}
+function saveWording(){try{localStorage.setItem('genba-wording-v1',JSON.stringify(wording))}catch(e){}}
+function renderWording(){
+ $('#word-age').innerHTML=Object.entries(WORD_AGES).map(([id,key])=>'<option value="'+id+'"'+(wording.age===id?' selected':'')+'>'+esc(baseTr(key))+'</option>').join('');
+ $('#word-role').innerHTML=Object.entries(WORD_ROLES).map(([id,pair])=>'<option value="'+id+'"'+(wording.role===id?' selected':'')+'>'+esc(baseTr(pair[0]))+'</option>').join('');
+ for(const [id,key]of Object.entries({post:'投稿する',edit:'編集',delete:'削除',heading:tpl.tl})){const input=$('#word-'+id);input.value=wording.custom[id]||'';input.placeholder=tr(key)}
+ $('#word-preview').textContent=tr(tpl.tl)+' / '+tr('投稿する')+' / '+tr('編集')+' / '+tr('削除');
+ $('#tx').placeholder=baseTr(wording.age==='child'?'できごとや、気づいたことを書いてみよう。':'作業や気づいたことを記入してください。');
+ $('#tx').setAttribute('aria-label',tr(tpl.tl));
+}
+$('#word-age').onchange=e=>{wording.age=e.target.value;saveWording();applyLang()};
+$('#word-role').onchange=e=>{wording.role=e.target.value;saveWording();applyLang()};
+for(const id of ['post','edit','delete','heading'])$('#word-'+id).onchange=e=>{wording.custom[id]=e.target.value.trim().slice(0,32);saveWording();applyLang()};
+$('#word-reset').onclick=()=>{wording=defaultWording();saveWording();applyLang()};
+function detect(){
+  let s='';try{s=localStorage.getItem('genba-lang')||''}catch(e){}
+  if(LC[s])return s;
+  const n=(navigator.language||'ja').toLowerCase();
+  if(n.startsWith('fil'))return 'fil';if(n.startsWith('tl'))return 'tl';
+  const b=n.slice(0,2);return LC[b]?b:'ja';
+}
+
+
+/* 日誌の形式（テンプレート） */
+const PRE={
+  diary:{name:'日記',wx:true,tl:'今日のできごと',fields:[]},
+  site:{name:'現場日誌',wx:true,tl:'作業内容',fields:[{k:'workers',l:'人数',t:'num',u:'人',d:5}]},
+  farm:{name:'農業日誌',wx:true,tl:'作業内容・様子',fields:[{k:'field',l:'圃場',t:'txt'},{k:'work',l:'作業',t:'sel',o:['耕起','定植','防除','施肥','収穫','出荷','その他']},{k:'hrs',l:'作業時間',t:'num',u:'時間'},{k:'qty',l:'収穫量',t:'num',u:'kg'}]},
+  pet:{name:'飼育日誌',wx:false,tl:'様子・メモ',fields:[{k:'target',l:'対象',t:'txt'},{k:'fed',l:'給餌',t:'chk'},{k:'med',l:'投薬',t:'chk'},{k:'wt',l:'体重',t:'num',u:'g'},{k:'temp',l:'水温・室温',t:'num',u:'℃'}]},
+  patrol:{name:'点検巡回',wx:false,tl:'所見・指摘事項',fields:[{k:'place',l:'場所',t:'txt'},{k:'time',l:'時刻',t:'time'},{k:'items',l:'点検項目',t:'lst',o:['外観','異音','漏れ','温度','清掃状況']},{k:'res',l:'結果',t:'sel',o:['異常なし','要注意','要対応']}]},
+  watch:{name:'観察記録',wx:true,tl:'観察メモ',fields:[{k:'target',l:'対象',t:'txt'},{k:'time',l:'時刻',t:'time'},{k:'temp',l:'気温',t:'num',u:'℃'},{k:'cnt',l:'個体数',t:'num',u:'匹'}]}
+};
+let tpl={...clone(PRE.site),v:0,ts:0};
+const nowStr=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+const defX=()=>{const x={};tpl.fields.forEach(f=>{if(f.d!==undefined)x[f.k]=f.d;if(f.t==='time')x[f.k]=nowStr()});return x};
+const newDraft=()=>({id:null,date:today(),weather:tpl.wx?'sun':'',x:defX(),text:'',photos:[],changed:false});
+const logs=new Map(),ph=new Map(),dead=new Map();
+const isDead=l=>dead.get(l.id)?.has(l.addr)||false;
+let draft=newDraft(),tt;
+function toast(m){const t=$('#toast');t.textContent=tr(m);t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
+
+/* 受信データの検証 */
+const isDate=s=>{if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const d=new Date(s+'T12:00:00Z');return !isNaN(d)&&d.toISOString().slice(0,10)===s};
+const okId=s=>typeof s==='string'&&/^[\w-]{1,40}$/.test(s);
+const okF=f=>f&&typeof f==='object'&&typeof f.k==='string'&&/^\w{1,8}$/.test(f.k)&&typeof f.l==='string'&&f.l.length>=1&&f.l.length<=12&&['num','sel','chk','txt','time','lst'].includes(f.t)&&(f.u===undefined||(typeof f.u==='string'&&f.u.length<=4))&&(f.d===undefined||Number.isFinite(f.d))&&((f.t!=='sel'&&f.t!=='lst')||(Array.isArray(f.o)&&f.o.length>=1&&f.o.length<=8&&f.o.every(s=>typeof s==='string'&&s.length>=1&&s.length<=12)));
+const okTpl=p=>Number.isInteger(p.v)&&p.v>=1&&typeof p.name==='string'&&p.name.length>=1&&p.name.length<=16&&typeof p.wx==='boolean'&&typeof p.tl==='string'&&p.tl.length>=1&&p.tl.length<=16&&Array.isArray(p.fields)&&p.fields.length<=6&&p.fields.every(okF)&&new Set(p.fields.map(f=>f.k)).size===p.fields.length&&Number.isFinite(p.ts);
+const okX=x=>x===undefined||(x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length<=8&&Object.entries(x).every(([k,v])=>/^\w{1,8}$/.test(k)&&((typeof v==='number'&&Number.isFinite(v))||typeof v==='boolean'||(typeof v==='string'&&v.length<=100))));
+const okLog=p=>p&&typeof p==='object'&&okId(p.id)&&isDate(p.date)&&(p.weather===undefined||p.weather===''||(typeof p.weather==='string'&&WX.hasOwnProperty(p.weather)))&&(p.workers===undefined||(Number.isInteger(p.workers)&&p.workers>=0&&p.workers<=999))&&okX(p.x)&&typeof p.text==='string'&&p.text.length<=500&&Number.isInteger(p.rev)&&p.rev>=1&&Number.isInteger(p.pr)&&p.pr>=1&&p.pr<=p.rev&&Number.isInteger(p.n)&&p.n>=0&&p.n<=3&&typeof p.addr==='string'&&typeof p.author==='string'&&p.author.length<=256&&p.addr.length<=1024&&Number.isFinite(p.ts);
+const okPhoto=p=>p&&typeof p==='object'&&okId(p.logId)&&Number.isInteger(p.pr)&&p.pr>=1&&Number.isInteger(p.idx)&&p.idx>=0&&p.idx<3&&typeof p.data==='string'&&p.data.length<=MAX&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.data);
+
+function apply(p){
+  if(!p||typeof p!=='object')return;
+  if(p.type==='log'&&okLog(p)){
+    const c=logs.get(p.id);
+    if(!c||(p.addr===c.addr&&p.rev>c.rev)){const n={...p,x:{...(p.x||{})}};if(Number.isInteger(p.workers)&&!('workers' in n.x))n.x.workers=p.workers;logs.set(p.id,n)}
+  }
+  else if(p.type==='photo'&&okPhoto(p)){const k=p.logId+':'+p.pr;if(!ph.has(k))ph.set(k,[]);ph.get(k)[p.idx]=p.data}
+  else if(p.type==='del'&&okId(p.id)&&typeof p.addr==='string'){if(!dead.has(p.id))dead.set(p.id,new Set());dead.get(p.id).add(p.addr)}
+  else if(p.type==='tpl'&&okTpl(p)){
+    if(p.v>tpl.v||(p.v===tpl.v&&p.ts>tpl.ts)){tpl={name:p.name,wx:p.wx,tl:p.tl,fields:p.fields.map(f=>({k:f.k,l:f.l,t:f.t,u:f.u,d:f.d,o:f.o})),v:p.v,ts:p.ts};tplChanged()}
+    return;
+  }
+  else return;
+  schedule();
+}
+let q=0;function schedule(){if(!q)q=requestAnimationFrame(()=>{q=0;renderList();if(!$('#vd').hidden)sumUpdate()})}
+function tplChanged(){
+  $('#sub').textContent=tr(tpl.name);$('#tl').textContent=tr(tpl.tl);
+  if(!draft.id&&!busy){tpl.fields.forEach(f=>{if(draft.x[f.k]===undefined){if(f.d!==undefined)draft.x[f.k]=f.d;else if(f.t==='time')draft.x[f.k]=nowStr()}});draft.weather=tpl.wx?(draft.weather||'sun'):''}
+  renderBoard();renderCur();renderWording();schedule();
+}
+
+/* 一覧 */
+const NGRE=/要対応|異常あり|不良|NG|故障|危険/;
+function xs(l){
+  const o=[];
+  tpl.fields.forEach(f=>{const v=l.x[f.k]??(f.t==='lst'?'':undefined);if(v===undefined||(v===''&&f.t!=='lst')||v===false)return;
+    if(f.t==='num'&&typeof v==='number')o.push({s:tr(f.l)+' '+v+tr(f.u||'')});
+    else if(f.t==='chk'&&v===true)o.push({s:'✔ '+tr(f.l)});
+    else if(f.t==='time'&&typeof v==='string'&&/^\d{2}:\d{2}$/.test(v))o.push({s:'🕒 '+v});
+    else if(f.t==='lst'&&typeof v==='string'){const n=f.o.length,ok=v.slice(0,n).split('1').length-1,un=f.o.filter((_,i)=>v[i]!=='1');o.push({s:tr(f.l)+' '+ok+'/'+n});if(un.length)o.push({s:tr('未確認：')+un.map(x=>tr(x)).join('・'),ng:true})}
+    else if((f.t==='sel'||f.t==='txt')&&typeof v==='string')o.push({s:tr(f.l)+'：'+(f.t==='sel'?tr(v):v),ng:f.t==='sel'&&NGRE.test(v)&&!/異常なし/.test(v)})});
+  return o;
+}
+function card(l){
+  const[d,wd]=fmt(l.date),w=l.weather&&WX[l.weather],mine=l.addr===W.selfAddr,a=ph.get(l.id+':'+l.pr)||[],t=new Date(l.ts),x=xs(l);
+  let ps='';for(let i=0;i<l.n;i++)ps+=a[i]?`<button data-v="${l.id}:${i}" aria-label="${esc(tr('拡大写真'))} ${i+1}"><img src="${a[i]}" alt=""></button>`:'<div>'+tr('受信中…')+'</div>';
+  return `<article class="card"><div class="top"><div class="dt">${d}<small>(${wd})</small></div>${w?`<div class="chips"><span class="wxe" title="${tr(w[1])}">${w[0]}</span></div>`:''}</div>
+  ${x.length?`<div class="xs">${x.map(o=>`<span class="chip${o.ng?' ng':''}">${esc(o.s)}</span>`).join('')}</div>`:''}
+  ${l.text?`<div class="body">${esc(l.text)}</div>`:''}${l.n?`<div class="ph">${ps}</div>`:''}
+  <div class="meta"><span>${esc(l.author)}</span><span>${pad(t.getHours())}:${pad(t.getMinutes())}</span>${l.rev>1?`<span class="tag">${tr('訂正あり')}</span>`:''}
+  ${mine?`<div class="acts"><button class="mini" data-e="${l.id}">${esc(tr('編集'))}</button><button class="mini" data-d="${l.id}">${esc(tr('削除'))}</button></div>`:''}</div></article>`;
+}
+let onlyNg=false;
+const hasNg=l=>xs(l).some(o=>o.ng);
+function renderList(){
+  const all=[...logs.values()].filter(l=>!isDead(l)).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:b.ts-a.ts);
+  const ng=all.filter(hasNg).length,arr=onlyNg?all.filter(hasNg):all;
+  $('#flt').hidden=!ng&&!onlyNg;$('#fng').textContent='⚠ '+tr('要対応・未確認だけ')+' ('+ng+')';$('#fng').setAttribute('aria-pressed',onlyNg);
+  $('#cnt').textContent=all.length;$('#empty').hidden=all.length>0;
+  $('#list').innerHTML=arr.length?arr.map(card).join(''):(all.length?'<p class="hint" style="text-align:center">'+tr('該当する記録はありません')+'</p>':'');
+}
+$('#fng').onclick=()=>{onlyNg=!onlyNg;renderList()};
+$('#list').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.v){const[id,i]=b.dataset.v.split(':'),l=logs.get(id);const s=l&&(ph.get(id+':'+l.pr)||[])[i];if(s){$('#v img').src=s;$('#v').hidden=false}}
+  else if(b.dataset.e)edit(b.dataset.e);
+  else if(b.dataset.d){
+    if(b.classList.contains('arm')){b.disabled=true;send({payload:{type:'del',id:b.dataset.d,addr:W.selfAddr},info:tr('削除しました')}).then(()=>toast('削除しました')).catch(()=>{b.disabled=false;toast('送信できません。もう一度押してください')})}
+    else{b.classList.add('arm');b.textContent=tr('もう一度押して削除');setTimeout(()=>{b.classList.remove('arm');b.textContent=tr('削除')},3000)}
+  }
+});
+$('#v').addEventListener('click',()=>$('#v').hidden=true);
+
+/* 入力フォーム（形式に合わせて組み立て） */
+function ctl(f,v){
+  const k=esc(f.k);
+  if(f.t==='num')return '<div class="step"><button class="chalk" data-s="-1" data-k="'+k+'" aria-label="減らす">−</button><div class="n"><input type="number" inputmode="decimal" step="any" min="'+minFor(f)+'" data-k="'+k+'" value="'+esc(v??'')+'" aria-label="'+esc(f.l)+'"><span>'+esc(tr(f.u||''))+'</span></div><button class="chalk" data-s="1" data-k="'+k+'" aria-label="増やす">＋</button></div>';
+  if(f.t==='sel')return '<div class="opts">'+f.o.map(o=>'<button class="chalk" data-k="'+k+'" data-o="'+esc(o)+'" aria-pressed="'+(v===o)+'">'+esc(tr(o))+'</button>').join('')+'</div>';
+  if(f.t==='chk')return '<button class="chalk tg" data-k="'+k+'" data-c="1" aria-pressed="'+(v===true)+'">'+(v===true?'✔ '+tr('はい'):tr('なし'))+'</button>';
+  if(f.t==='time')return '<div class="tm"><input class="chalk tx" type="time" data-k="'+k+'" value="'+esc(v||'')+'" aria-label="'+esc(f.l)+'"><button class="chalk" data-now="1" data-k="'+k+'">'+tr('今')+'</button></div>';
+  if(f.t==='lst'){const s=typeof v==='string'?v:'';return '<div class="lst"><button class="chalk tg" data-la="1" data-k="'+k+'">'+tr('すべてOKにする')+'</button>'+f.o.map((o,i)=>'<button class="chalk tg" data-k="'+k+'" data-li="'+i+'" aria-pressed="'+(s[i]==='1')+'">'+(s[i]==='1'?'✔ ':'☐ ')+esc(tr(o))+'</button>').join('')+'</div>'}
+  return '<input class="chalk tx" type="text" maxlength="30" data-k="'+k+'" value="'+esc(v||'')+'" aria-label="'+esc(f.l)+'">';
+}
+function renderBoard(){
+  let h='<div class="row"><b>'+tr('日付')+'</b><input id="date" class="chalk" type="date" value="'+esc(draft.date)+'"></div>';
+  if(tpl.wx)h+='<div class="row"><b>'+tr('天気')+'</b><div class="wx">'+Object.entries(WX).map(([k,v])=>'<button class="chalk" data-w="'+k+'" aria-pressed="'+(draft.weather===k)+'">'+v[0]+'<small>'+tr(v[1])+'</small></button>').join('')+'</div></div>';
+  tpl.fields.forEach(f=>{h+='<div class="row"><b>'+esc(tr(f.l))+'</b>'+ctl(f,draft.x[f.k])+'</div>'});
+  $('#board').innerHTML=h;localize($('#board'));if(busy)$('#board').querySelectorAll('button,input').forEach(e=>e.disabled=true);
+}
+$('#board').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||busy)return;
+  if(b.dataset.w){draft.weather=b.dataset.w;renderBoard();return}
+  const f=tpl.fields.find(x=>x.k===b.dataset.k);if(!f)return;
+  if(b.dataset.s){draft.x[f.k]=Math.max(minFor(f),Math.min(999999,Math.round(((Number(draft.x[f.k])||0)+Number(b.dataset.s))*100)/100));renderBoard()}
+  else if(b.dataset.o!==undefined){draft.x[f.k]=draft.x[f.k]===b.dataset.o?'':b.dataset.o;renderBoard()}
+  else if(b.dataset.c){draft.x[f.k]=draft.x[f.k]!==true;renderBoard()}
+  else if(b.dataset.now!==undefined){draft.x[f.k]=nowStr();renderBoard()}
+  else if(b.dataset.la!==undefined){draft.x[f.k]='1'.repeat(f.o.length);renderBoard()}
+  else if(b.dataset.li!==undefined){const s=String(draft.x[f.k]||'').padEnd(f.o.length,'0').slice(0,f.o.length).split(''),i=+b.dataset.li;s[i]=s[i]==='1'?'0':'1';draft.x[f.k]=s.join('');renderBoard()}
+});
+$('#board').addEventListener('input',e=>{
+  if(busy)return;const t=e.target,f=tpl.fields.find(x=>x.k===t.dataset.k);if(!f)return;
+  if(f.t==='num')draft.x[f.k]=t.value===''?'':Math.max(minFor(f),Math.min(999999,Number(t.value)||0));
+  else if(f.t==='txt'||f.t==='time')draft.x[f.k]=t.value;
+});
+$('#board').addEventListener('change',e=>{if(e.target.id==='date'){draft.date=e.target.value||today();e.target.value=draft.date}});
+$('#tx').oninput=e=>{draft.text=e.target.value;$('#tc').textContent=e.target.value.length+'/500'};
+function syncForm(){
+  renderBoard();$('#tx').value=draft.text;$('#tc').textContent=draft.text.length+'/500';$('#tl').textContent=tr(tpl.tl);
+  $('#eb').hidden=!draft.id;$('#post').textContent=tr(draft.id?'訂正を保存する':'投稿する');slots();
+}
+function slots(){
+  const n=draft.photos.length;
+  $('#slots').innerHTML=[0,1,2].map(i=>draft.photos[i]?`<div class="slot"><img src="${draft.photos[i]}" alt=""><button class="x" data-x="${i}" aria-label="写真を外す">×</button></div>`:'<div class="slot"></div>').join('');
+  localize($('#slots'));$('#pc').textContent=n+'/3';$('#cam').disabled=$('#fil').disabled=n>=3||busy;
+}
+$('#slots').addEventListener('click',e=>{const b=e.target.closest('.x');if(b&&!busy){draft.photos.splice(+b.dataset.x,1);draft.changed=true;slots()}});
+function shrink(f){return new Promise((ok,ng)=>{const r=new FileReader();r.onerror=ng;r.onload=()=>{const im=new Image();im.onerror=ng;im.onload=()=>{let side=960,qu=.72;for(let i=0;i<9;i++){const s=Math.min(1,side/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const o=c.toDataURL('image/jpeg',qu);if(o.length<=MAX-1500)return ok(o);side*=.85;qu=Math.max(.5,qu-.04)}ng(new Error('big'))};im.src=r.result};r.readAsDataURL(f)})}
+async function addFiles(el){
+  if(busy)return;const target=draft,fs=[...el.files];el.value='';loadingPhotos++;$('#post').disabled=true;
+  for(const f of fs){if(draft.photos.length>=3){toast(tr('写真は3枚までです'));break}
+    try{const photo=await shrink(f);if(draft!==target)break;if(draft.photos.length>=3){toast('写真は3枚までです');break}draft.photos.push(photo);draft.changed=true;slots()}catch(x){toast(tr('写真を読み込めません'))}}
+  loadingPhotos--;$('#post').disabled=busy||loadingPhotos>0;
+}
+$('#cam').onchange=e=>addFiles(e.target);$('#fil').onchange=e=>addFiles(e.target);
+
+/* 投稿・訂正 */
+function edit(id){
+  if(busy)return;const l=logs.get(id);if(!l||isDead(l))return;const a=ph.get(id+':'+l.pr)||[];
+  if(a.filter(Boolean).length<l.n){toast(tr('写真を受信中です。少し待ってください'));return}
+  draft={id,date:l.date,weather:l.weather||'',x:{...l.x},text:l.text,photos:a.slice(0,l.n),changed:false};syncForm();go('w');
+}
+$('#cancel').onclick=()=>{if(busy)return;draft=newDraft();syncForm()};
+$('#post').onclick=async()=>{
+  if(busy)return;if(loadingPhotos){toast('写真の処理中です。少し待ってください');return}
+  draft.text=$('#tx').value.trim();
+  const c=draft.id?logs.get(draft.id):null,x={};if(c&&isDead(c)){toast('該当する記録はありません');return}
+  tpl.fields.forEach(f=>{const v=draft.x[f.k];if(v!==''&&v!==undefined&&v!==false)x[f.k]=v});
+  if(c)for(const k in c.x){if(!(k in x)&&!tpl.fields.some(f=>f.k===k)&&Object.keys(x).length<8)x[k]=c.x[k]}
+  if(!draft.text&&!draft.photos.length&&!Object.keys(x).length){toast(tr('内容か写真を入れてください'));return}
+  const id=draft.id||('l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),rev=c?c.rev+1:1,pr=(!c||draft.changed)?rev:c.pr;
+  const p={type:'log',id,rev,date:draft.date,weather:tpl.wx?draft.weather:'',x,text:draft.text,n:draft.photos.length,pr,author:(W.selfName||'—').slice(0,256),addr:W.selfAddr,ts:Date.now()};
+  const t1=(xs(p)[0]||{}).s,info=((c?tr('訂正あり')+' ':'')+fmt(p.date)[0]+' '+p.author+'：'+(p.text||tr('写真')).replace(/\s+/g,' ').slice(0,22)+(t1?'（'+t1+'）':'')).slice(0,60);
+  lock(true);try{
+    await send({payload:p,info});
+    if(!c||draft.changed)for(const [idx,data] of draft.photos.entries())await send({payload:{type:'photo',logId:id,pr,idx,data}});
+    toast(tr(c?'訂正を保存しました':'投稿しました'));draft=newDraft();syncForm();go('l');
+  }catch(e){draft.id=id;draft.changed=true;syncForm();toast(tr('送信できません。もう一度押してください'))}finally{lock(false)}
+};
+
+/* タブ */
+const TABS={w:['#vw','#t1'],l:['#vl','#t2'],d:['#vd','#t3'],s:['#vs','#t4']};
+function go(t){
+  for(const k in TABS){$(TABS[k][0]).hidden=k!==t;$(TABS[k][1]).setAttribute('aria-selected',k===t)}
+  if(t==='l')renderList();if(t==='d')sumUpdate();if(t==='s'){renderCur();renderWording();if(!edDirty)loadEd(tpl)}
+  window.scrollTo(0,0);
+}
+$('#t1').onclick=()=>go('w');$('#t2').onclick=()=>go('l');$('#t3').onclick=()=>go('d');$('#t4').onclick=()=>go('s');$('#first').onclick=()=>go('w');
+
+/* 書き出し・取り込み */
+const live=()=>[...logs.values()].filter(l=>!isDead(l));
+const ym=()=>$('#mon').value||today().slice(0,7);
+const pickLogs=()=>{const all=$('#all').checked,m=ym();return live().filter(l=>all||l.date.startsWith(m)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.ts-b.ts)};
+const photosOf=l=>(ph.get(l.id+':'+l.pr)||[]).slice(0,l.n).filter(Boolean);
+const label=()=>$('#all').checked?tr('全期間'):ym();
+const counts=(n,p)=>tr('記録')+': '+n+' / '+tr('写真')+': '+p;
+function sumUpdate(){const a=pickLogs();$('#sum').textContent=label()+' / '+counts(a.length,a.reduce((s,l)=>s+photosOf(l).length,0));document.querySelectorAll('.ex').forEach(b=>b.disabled=!a.length);drawGraph()}
+$('#mon').value=today().slice(0,7);$('#mon').oninput=sumUpdate;$('#all').onchange=sumUpdate;
+const n1=v=>String(Math.round(v*10)/10);
+function drawGraph(){
+  const nf=tpl.fields.filter(f=>f.t==='num'),sec=$('#gsec');
+  sec.hidden=!nf.length;if(!nf.length)return;
+  const sel=$('#gf'),cur=sel.value;
+  sel.innerHTML=nf.map(f=>'<option value="'+esc(f.k)+'">'+esc(tr(f.l)+(f.u?'（'+tr(f.u)+'）':''))+'</option>').join('');
+  sel.value=nf.some(f=>f.k===cur)?cur:nf[0].k;
+  const f=nf.find(x=>x.k===sel.value),tf=tpl.fields.find(x=>x.t==='time'),ls=pickLogs(),cnt={},run={},pts=[];
+  ls.forEach(l=>{if(typeof l.x[f.k]==='number')cnt[l.date]=(cnt[l.date]||0)+1});
+  ls.forEach(l=>{
+    const v=l.x[f.k];if(typeof v!=='number')return;
+    const[y,m,d]=l.date.split('-').map(Number);let t=Date.UTC(y,m-1,d)/864e5;const tv=tf&&l.x[tf.k];
+    if(typeof tv==='string'&&/^\d{2}:\d{2}$/.test(tv))t+=(+tv.slice(0,2)*60+ +tv.slice(3,5))/1440;
+    else{const k=run[l.date]=(run[l.date]||0)+1;t+=(k-1)/cnt[l.date]*.8}
+    pts.push({t,v,date:l.date});
+  });
+  pts.sort((a,b)=>a.t-b.t);
+  if(pts.length<2){$('#gr').innerHTML='<p class="hint">'+tr('この期間に2件以上の記録があると表示します。')+'</p>';$('#gs').textContent='';return}
+  const WW=320,HH=190,ml=46,mr=14,mt=14,mb=30,vs=pts.map(p=>p.v);
+  let lo=Math.min(...vs),hi=Math.max(...vs);if(lo===hi){lo-=1;hi+=1}const pd=(hi-lo)*.12;lo-=pd;hi+=pd;
+  const ta=pts[0].t,tb=pts[pts.length-1].t,sx=t=>ml+(tb===ta?.5:(t-ta)/(tb-ta))*(WW-ml-mr),sy=v=>mt+(1-(v-lo)/(hi-lo))*(HH-mt-mb);
+  let g='';
+  for(let i=0;i<3;i++){const v=lo+(hi-lo)*i/2,y=sy(v);g+='<line x1="'+ml+'" x2="'+(WW-mr)+'" y1="'+y+'" y2="'+y+'" style="stroke:var(--line)"/><text x="'+(ml-6)+'" y="'+(y+4)+'" text-anchor="end" style="fill:var(--mute)" font-size="11">'+n1(v)+'</text>'}
+  g+='<polyline fill="none" style="stroke:var(--y)" stroke-width="3" stroke-linejoin="round" points="'+pts.map(p=>sx(p.t).toFixed(1)+','+sy(p.v).toFixed(1)).join(' ')+'"/>';
+  g+=pts.map(p=>'<circle cx="'+sx(p.t).toFixed(1)+'" cy="'+sy(p.v).toFixed(1)+'" r="4" style="fill:var(--card);stroke:var(--ink)" stroke-width="2"/>').join('');
+  g+='<text x="'+ml+'" y="'+(HH-8)+'" style="fill:var(--mute)" font-size="11">'+fmt(pts[0].date)[0]+'</text><text x="'+(WW-mr)+'" y="'+(HH-8)+'" text-anchor="end" style="fill:var(--mute)" font-size="11">'+fmt(pts[pts.length-1].date)[0]+'</text>';
+  $('#gr').innerHTML='<svg viewBox="0 0 '+WW+' '+HH+'" role="img" aria-label="'+esc(tr(f.l))+'">'+g+'</svg>';
+  const u=tr(f.u||''),avg=vs.reduce((a,b)=>a+b,0)/vs.length;
+  $('#gs').textContent=tr('最新')+' '+n1(vs[vs.length-1])+u+' / '+tr('最小')+' '+n1(Math.min(...vs))+u+' / '+tr('最大')+' '+n1(Math.max(...vs))+u+' / '+tr('平均')+' '+n1(avg)+u+' ('+vs.length+')';
+}
+$('#gf').onchange=drawGraph;
+
+function cellOf(f,v){
+  if(v===undefined)return '';if(f.t==='chk')return v===true?'○':'';
+  if(f.t==='lst'&&typeof v==='string'){const n=f.o.length,k=v.slice(0,n).split('1').length-1,un=f.o.filter((_,i)=>v[i]!=='1');return k+'/'+n+(un.length?' '+tr('未確認：')+un.map(tr).join('・'):'')}
+  return typeof v==='string'&&f.t==='sel'?tr(v):v;
+}
+const cs=v=>{v=String(v);if(/^[\s]*[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
+function csv(a){
+  const hd=[tr('日付'),tr('曜日')];if(tpl.wx)hd.push(tr('天気'));
+  tpl.fields.forEach(f=>hd.push(tr(f.l)+(f.t==='num'&&f.u?'（'+tr(f.u)+'）':'')));
+  hd.push(tr(tpl.tl),tr('投稿者'),tr('写真枚数'),tr('訂正回数'));
+  const r=[hd];
+  a.forEach(l=>{const row=[l.date,fmt(l.date)[1]];if(tpl.wx)row.push(l.weather?tr(WX[l.weather][1]):'');
+    tpl.fields.forEach(f=>{const v=l.x[f.k];row.push(cellOf(f,v))});
+    row.push(l.text,l.author,photosOf(l).length,l.rev-1);r.push(row)});
+  return '\uFEFF'+r.map(x=>x.map(cs).join(',')).join('\r\n');
+}
+function html(a){
+  const t=tr(tpl.name)+' '+label();
+  const items=a.map(l=>{const[d,wd]=fmt(l.date),p=photosOf(l),w=l.weather&&WX[l.weather],parts=[];if(w)parts.push({s:w[0]+' '+tr(w[1])});xs(l).forEach(o=>parts.push(o));parts.push({s:l.author});
+    return '<article><div class="h">'+l.date+' ('+wd+')<span>'+parts.map(o=>o.ng?'<b class="ng">'+esc(o.s)+'</b>':esc(o.s)).join('／')+'</span></div><p>'+esc(l.text)+'</p>'+(p.length?'<div class="g">'+p.map(s=>'<img src="'+s+'" alt="">').join('')+'</div>':'')+'</article>'}).join('');
+  return '<!DOCTYPE html><html lang="'+esc(LC[LANG])+'" dir="'+(LANG==='ar'?'rtl':'ltr')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(t)+'</title><style>body{font:15px/1.6 system-ui,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#16202A}h1{font-size:22px;border-bottom:4px solid #FFC21A;padding-bottom:8px}article{break-inside:avoid;border:1px solid #ccd3da;border-left:6px solid #FFC21A;border-radius:10px;padding:12px 14px;margin:14px 0}.h{font-weight:800;font-size:18px}.h span{font-weight:500;font-size:14px;color:#556;margin-left:10px}p{white-space:pre-wrap;margin:8px 0}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.g img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px}small{color:#667}.ng{color:#C93A26}@media print{body{padding:0}}</style></head><body><h1>'+esc(t)+'</h1><small>'+tr('記録')+': '+a.length+' / '+tr('書き出し')+' — げんばログ</small>'+items+'</body></html>';
+}
+const jsonOut=a=>JSON.stringify({app:'genba-log',v:2,exported:Date.now(),tpl:{name:tpl.name,wx:tpl.wx,tl:tpl.tl,fields:tpl.fields},logs:a.map(l=>{const p=photosOf(l);return{...l,n:p.length,photos:p}})});
+function b64(s){const u=new TextEncoder().encode(s);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)}
+async function sendFile(name,mime,str,text){
+  if(str.length>15e6){toast('ファイルが大きすぎます。期間を短くしてください');return}
+  if(W.sendToChat){
+    try{await W.sendToChat({file:{name,base64:b64(str)},text})}
+    catch(e){if(!/cancel/i.test(String(e&&e.message||e)))toast('送信できません。もう一度押してください')}
+    return;
+  }
+  if(!W.mock){toast('お使いのDeltaChatは書き出しに未対応です');return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([str],{type:mime}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('書き出し');
+}
+function exp(k){
+  const a=pickLogs();if(!a.length)return;if(a.some(l=>photosOf(l).length<l.n)){toast('写真を受信中です。少し待ってください');return}
+  const n=$('#all').checked?'all':ym(),tx=tr(tpl.name)+' '+label()+' ('+a.length+')';
+  if(k==='c')sendFile('genba-'+n+'.csv','text/csv',csv(a),tx);
+  else if(k==='h')sendFile('genba-'+n+'.html','text/html',html(a),tx);
+  else sendFile('genba-'+n+'.json','application/json',jsonOut(a),tx+' (JSON)');
+}
+$('#xc').onclick=()=>exp('c');$('#xh').onclick=()=>exp('h');$('#xj').onclick=()=>exp('j');
+
+let imp=null,impTpl=null;
+const readText=f=>new Promise((ok,ng)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=ng;r.readAsText(f)});
+async function readImport(f){
+  imp=null;impTpl=null;$('#impbox').hidden=true;
+  try{
+    if(f.size>20e6)throw Error('file too large');const j=JSON.parse(await readText(f));
+    if(j.app!=='genba-log'||!Array.isArray(j.logs))throw 0;
+    const ok=[],seen=new Set();let pc=0;
+    for(const l of j.logs){
+      if(!l||typeof l!=='object'||!okLog(l)||!Array.isArray(l.photos))continue;
+      const c=logs.get(l.id);
+      if((c&&(c.addr!==l.addr||c.rev>=l.rev))||isDead(l)||seen.has(l.id))continue;seen.add(l.id);
+      const p=l.photos.slice(0,3).filter(s=>okPhoto({logId:l.id,pr:l.pr,idx:0,data:s})&&s.length<=MAX-1500);
+      if(p.length!==l.n)throw Error('incomplete photos');ok.push({...l,n:p.length,photos:p});pc+=p.length;
+    }
+    impTpl=null;
+    if(j.tpl&&typeof j.tpl==='object'){const t={name:j.tpl.name,wx:j.tpl.wx,tl:j.tpl.tl,fields:j.tpl.fields};if(okTpl({...t,v:1,ts:1}))impTpl=t}
+    if(!ok.length&&!impTpl){toast('取り込める新しい記録がありません');return}
+    imp=ok;$('#impinfo').textContent=tr('取り込み')+' / '+counts(ok.length,pc);
+    $('#impl').hidden=!impTpl;$('#impl span').textContent=tr('形式も取り込む')+': '+(impTpl?tr(impTpl.name):'');$('#impbox').hidden=false;
+  }catch(e){toast('取り込めません。げんばログの引き継ぎデータを選んでください')}
+}
+$('#impbtn').onclick=async()=>{
+  if(W.importFiles){try{const fs=await W.importFiles({extensions:['.json'],mimeTypes:['application/json'],multiple:false});if(fs&&fs[0])readImport(fs[0])}catch(e){}}
+  else $('#impfile').click();
+};
+$('#impfile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)readImport(f)};
+$('#impno').onclick=()=>{imp=null;impTpl=null;$('#impbox').hidden=true};
+$('#impgo').onclick=async()=>{
+  if(!imp||busy)return;lock(true);
+  try{
+    if(impTpl&&$('#imptpl').checked)await publishTpl(impTpl);
+    for(const [i,l] of imp.entries()){
+      const{photos,...p}=l,u={payload:{...p,type:'log'}};
+      if(!i)u.info=tr('取り込み')+': '+imp.length;
+      await send(u);
+      for(const [idx,data] of photos.entries())await send({payload:{type:'photo',logId:l.id,pr:l.pr,idx,data}});
+    }
+    toast('取り込み');imp=null;impTpl=null;$('#impbox').hidden=true;go('l');
+  }catch(e){toast('送信できません。もう一度押してください')}finally{lock(false)}
+};
+
+/* 形式の設定 */
+let ed=clone(PRE.site),edDirty=false;
+function publishTpl(t){
+  return send({payload:{type:'tpl',v:tpl.v+1,ts:Date.now(),name:t.name,wx:t.wx,tl:t.tl,fields:t.fields},info:tr('日誌の形式')+': '+tr(t.name)});
+}
+function renderCur(){$('#cur').textContent=tr('使用中')+': '+baseTr(tpl.name)+(tpl.v?' ('+tpl.v+')':' ('+tr('初期設定')+')')}
+function loadEd(t){ed=clone({name:t.name,wx:t.wx,tl:t.tl,fields:t.fields});renderEd()}
+function renderEd(){
+  $('#e-name').value=baseTr(ed.name);$('#e-wx').checked=ed.wx;$('#e-tl').value=baseTr(ed.tl);
+  $('#e-fields').innerHTML=ed.fields.map((f,i)=>'<div class="ef" data-row="'+i+'"><input data-p="l" maxlength="12" placeholder="項目名" aria-label="項目名" value="'+esc(baseTr(f.l))+'"><select data-p="t" aria-label="種類">'+[['num','数値'],['sel','選択'],['lst','チェックリスト'],['chk','チェック'],['time','時刻'],['txt','短い文']].map(([v,n])=>'<option value="'+v+'"'+(f.t===v?' selected':'')+'>'+tr(n)+'</option>').join('')+'</select>'+(f.t==='num'?'<input data-p="u" maxlength="4" placeholder="単位（kgなど）" aria-label="単位" value="'+esc(f.u||'')+'">':'')+(f.t==='sel'||f.t==='lst'?'<input data-p="o" placeholder="'+tr(f.t==='lst'?'点検項目を「、」で区切る':'選択肢を「、」で区切る')+'" aria-label="選択肢" value="'+esc((f.o||[]).map(baseTr).join(', '))+'">':'')+'<button class="mini" data-del="1" aria-label="この項目を削除">'+esc(tr('削除'))+'</button></div>').join('');
+  localize($('#e-fields'));$('#e-add').disabled=ed.fields.length>=6;
+}
+$('#presets').innerHTML=Object.entries(PRE).map(([k,v])=>'<button class="btn" data-p="'+k+'">'+esc(baseTr(v.name))+'</button>').join('');
+$('#presets').addEventListener('click',e=>{const b=e.target.closest('button');if(b){ed=clone(PRE[b.dataset.p]);edDirty=true;renderEd();toast('下の内容を確認して「全員に反映する」を押してください')}});
+$('#e-name').oninput=e=>{ed.name=e.target.value;edDirty=true};$('#e-tl').oninput=e=>{ed.tl=e.target.value;edDirty=true};$('#e-wx').onchange=e=>{ed.wx=e.target.checked;edDirty=true};
+$('#e-fields').addEventListener('input',e=>{
+  const row=e.target.closest('.ef'),p=e.target.dataset.p;if(!row||!p||p==='t')return;
+  const f=ed.fields[+row.dataset.row];edDirty=true;
+  if(p==='o')f.o=e.target.value.split(/[、,，]/).map(s=>s.trim()).filter(Boolean).slice(0,8);else f[p]=e.target.value;
+});
+$('#e-fields').addEventListener('change',e=>{const row=e.target.closest('.ef');if(row&&e.target.dataset.p==='t'){const f=ed.fields[+row.dataset.row];f.t=e.target.value;if((f.t==='sel'||f.t==='lst')&&!f.o)f.o=[];edDirty=true;renderEd()}});
+$('#e-fields').addEventListener('click',e=>{const b=e.target.closest('button[data-del]');if(b){ed.fields.splice(+b.closest('.ef').dataset.row,1);edDirty=true;renderEd()}});
+$('#e-add').onclick=()=>{if(ed.fields.length<6){ed.fields.push({k:'f'+Math.random().toString(36).slice(2,6),l:'',t:'num'});edDirty=true;renderEd()}};
+$('#e-save').onclick=async()=>{
+  if(busy)return;
+  const t={name:ed.name.trim(),wx:ed.wx,tl:ed.tl.trim(),fields:ed.fields.map(f=>{const o={k:f.k,l:(f.l||'').trim(),t:f.t};if(f.t==='num'&&f.u&&f.u.trim())o.u=f.u.trim();if(f.t==='sel'||f.t==='lst')o.o=(f.o||[]).filter(Boolean);if(f.d!==undefined)o.d=f.d;return o})};
+  if(!okTpl({...t,v:1,ts:1})){toast('名前と項目名を入れてください（選択項目は選択肢も必要です）');return}
+  lock(true);try{await publishTpl(t);edDirty=false;toast('全員に反映する')}catch(e){toast('送信できません。もう一度押してください')}finally{lock(false)}
+};
+
+function localize(root){
+  root.querySelectorAll('[data-i]').forEach(e=>{if(IDX.has(e.dataset.i)||EXTRA.ja[e.dataset.i])e.textContent=tr(e.dataset.i)});
+  root.querySelectorAll('[aria-label],[placeholder],img[alt]').forEach(e=>{for(const a of ['aria-label','placeholder','alt']){if(!e.hasAttribute(a))continue;const key='i18n'+a.replace('-','');if(!e.dataset[key])e.dataset[key]=e.getAttribute(a);e.setAttribute(a,tr(e.dataset[key]))}});
+
+}
+function applyLang(){
+  document.documentElement.lang=LC[LANG];document.documentElement.dir=LANG==='ar'?'rtl':'ltr';
+  localize(document.body);
+  $('#sub').textContent=tr(tpl.name);$('#tl').textContent=tr(tpl.tl);
+  renderWording();$('#post').textContent=tr(draft.id?'訂正を保存する':'投稿する');renderBoard();renderList();slots();renderCur();renderEd();sumUpdate();$('#presets').innerHTML=Object.entries(PRE).map(([k,v])=>'<button class="btn" data-p="'+k+'">'+esc(baseTr(v.name))+'</button>').join('');
+}
+$('#lang').onchange=e=>{LANG=e.target.value;try{localStorage.setItem('genba-lang',LANG)}catch(x){}applyLang()};
+LANG=detect();$('#lang').innerHTML=LN.map(([c,n])=>'<option value="'+c+'"'+(c===LANG?' selected':'')+'>'+n+'</option>').join('');
+syncForm();renderCur();applyLang();
+W.setUpdateListener(u=>{try{apply(u.payload)}catch(e){console.warn('Invalid update ignored',e)}},0).catch(()=>toast('受信を開始できません。開き直してください'));
+</script>
+</body>
+</html>
+
