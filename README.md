@@ -16,7 +16,7 @@ Delta Chatのチャットで、日々の出来事や作業を文章・写真・�
 
 |ファイル|使い方|
 |---|---|
-|[genba-log-1_5_1.xdc](genba-log-1_5_1.xdc)|Delta Chatで共有して使うアプリ本体|
+|[genba-log-1.5.1.xdc](genba-log-1.5.1.xdc)|Delta Chatで共有して使うアプリ本体|
 |[操作マニュアル HTML](genba-log.html)|ブラウザーで読む画面図付きの詳しい手順。画像はHTML内蔵|
 |[ブラウザデモ](genba-log-demo.html)|アプリの表示・操作をブラウザーだけで確認するテスト用HTML|
 
